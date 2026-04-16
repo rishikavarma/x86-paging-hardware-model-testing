@@ -1,0 +1,296 @@
+%%% paper.tex — PLOS 2026 submission
+%%% ACM sigplan, anonymous, 10pt (per CFP)
+%%% Max 6 pages (excl. bibliography), double-blind
+\documentclass[sigplan,anonymous,10pt]{acmart}
+
+% Disable CCS, keywords, and ACM ref format (not required for submission)
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\pagestyle{plain}
+
+\begin{document}
+
+\title{The Crux about Hardware Model Validations -- Towards Efficient Model Validation on Real Hardware}
+
+\author{Author 1}
+\affiliation{%
+  \institution{Institution}
+  \city{City}
+  \country{Country}
+}
+\email{author1@example.com}
+
+\author{Author 2}
+\affiliation{%
+  \institution{Institution}
+  \city{City}
+  \country{Country}
+}
+\email{author2@example.com}
+
+%% ============================================================
+%% Abstract
+%% ============================================================
+\begin{abstract}
+System software is verified against formal models of hardware that essentially
+provide a specification of the environment in which the software executes. The
+validity of the verification result depends on the accuracy of the model.
+%
+Model validation---relating the specified behaviour with the observable
+behaviour of real hardware---is hard, as modern processors execute many
+invisible internal steps that influence the observable outcome, and worse, they
+execute these steps speculatively.
+%
+We present a validation methodology that lets us validate real traces against a
+formal model using a synthesis approach to reconstruct possible traces that
+explain the observed behaviour on real hardware. To make this scale to
+real-world examples, we present a reduction argument that constrains the
+testing space while preserving representativeness.
+%
+We evaluate our approach on a model of the x86 memory-management unit~(MMU).
+\end{abstract}
+
+\maketitle
+
+%% ============================================================
+\section{Introduction}\label{sec:intro}
+%% ============================================================
+
+\subsection{Context}\label{sec:intro:context}
+
+Verifying the correctness of application code has many facets. While the
+application's own logic is an integral aspect, it is almost equally important
+to ensure that the process environment is used correctly. This implies that we
+need user-process-leverageable models of the process environment including both
+the operating-system layer and the hardware layer.
+
+The operating-system part of the process environment can be derived from a
+reduction of a verified specification of the OS code, but the hardware model is
+not as straightforward. Processor documentation can inform the design of a
+hardware model; however, such documentation is often incomplete and existing
+modelling practices may be incorrect. To ensure correct process-environment
+specifications for applications to leverage, the underlying hardware model must
+be tested and robust.
+
+To this end, we propose an initial exploration of the different aspects
+required to validate a hardware model and discuss how we apply these methods
+to the x86 paging hardware.
+
+\subsection{Problem}\label{sec:intro:problem}
+
+Testing the hardware model comes with challenges unique to this scenario.
+In traditional software verification, every action leading to a state
+transition defined by the model is observable. In the case of a hardware
+model, however, many events are triggered internally and are not directly
+observable. We must therefore test that the model encompasses observed
+behaviours using only externally visible actions, while anticipating the
+internal events that can explain the behaviour seen.
+
+For example, in the case of paging, a partial page walk being cached is not
+directly observable. However, if this cached partial walk is later used to
+complete a page walk and read data memory, and if the current page-table
+writes do not match the observed read, then the caching can be inferred.
+
+To assert that the model is correct, three aspects must be addressed:
+\begin{enumerate}
+  \item \textbf{Test-case generation.} We need exhaustive test cases that
+        invoke all possible behaviours in the hardware.
+  \item \textbf{Test execution harness.} We need to execute the tests with
+        as little interference from other effects as possible.
+  \item \textbf{Trace analysis.} We need to verify that the observed outcome
+        is allowed by the proposed model.
+\end{enumerate}
+Addressing all three aspects ensures a robust hardware model.
+
+%% ============================================================
+\section{Motivation}\label{sec:motivation}
+%% ============================================================
+
+% TODO: Motivate why hardware model validation is critical.
+% Discuss real-world consequences of incorrect models (e.g., soundness of
+% verified system software depending on model fidelity).
+
+%% ============================================================
+\section{Background}\label{sec:background}
+%% ============================================================
+
+\subsection{Formal Hardware Models}\label{sec:bg:formal}
+
+% TODO: Discuss existing formal hardware models and their role in
+% software verification.
+
+\subsection{Modern Hardware and Observable vs.\ Internal Events}%
+\label{sec:bg:observable}
+
+% TODO: Describe the distinction between externally observable events
+% (e.g., memory reads/writes) and internal micro-architectural events
+% (e.g., TLB fills, speculative walks, cache evictions).
+
+\subsection{Software Synthesis}\label{sec:bg:synthesis}
+
+% TODO: Introduce the synthesis problem and how it relates to
+% reconstructing internal traces from observed behaviour.
+
+%% ============================================================
+\section{Proposed Model}\label{sec:model}
+%% ============================================================
+
+% TODO: Present the formal model of the x86 MMU that is the subject of
+% validation. Describe states, transitions, and the distinction between
+% external and internal actions.
+
+%% ============================================================
+\section{Reduction Argument}\label{sec:reduction}
+%% ============================================================
+
+The model is expected to be consistent across variables such as the number of
+cores, virtual addresses, and physical addresses; however, testing across every
+possible value is impractical. Large traces with many external and internal
+actions cause state-space explosion and become computationally inviable.
+
+To ensure efficiency without compromising correctness, we propose a set of
+arguments that constrain the testing space while still representing any
+possible configuration. This idea is inspired by the \emph{small-world
+argument}: behaviours in the large state space can be represented by a
+suitably chosen small subset of each parameter.
+
+The aspects we consider are:
+\begin{itemize}
+  \item Number of cores
+  \item Number of paging levels
+  \item Number of virtual addresses
+  \item Number of physical addresses for data
+  \item Number of physical addresses for page-table entries
+  \item Length of each trace
+\end{itemize}
+
+We present semi-formal arguments to constrain each of these variables.
+
+As a proof of concept, we only consider legal page structures---we avoid
+situations such as self-referencing PTEs and address aliasing---and we do not
+consider huge pages.
+
+\subsection{Cores}\label{sec:reduction:cores}
+
+To determine the number of cores required, we first consider how the core
+count affects the model. The state can be partitioned into
+\emph{core-local state} (TLB, page-structure cache, store buffers, etc.)\ and
+\emph{global state} (page-table and data memory). All cores share the global
+state, and only the paging hardware updates it directly. Each core updates its
+own core-local state.
+
+Synchronisation effects arise from the interplay between a core updating its
+local state and the hardware updating the global state (via page-table writes,
+write-backs, evictions, etc.). Two cases must be tested:
+\begin{enumerate}
+  \item How do different changes in the global and local state affect
+        behaviour within a single core?
+  \item Do global updates triggered by local core updates follow total store
+        order as expected by the model?
+\end{enumerate}
+
+For the first case, one additional core suffices to induce global changes,
+giving a minimum of \textbf{two cores}. For the second case, detecting cycles
+in read--write anti-dependencies also requires only two cores in principle,
+though four cores (two writers and two readers) make the effect easier to
+observe in practice.
+
+\subsection{Paging Levels}\label{sec:reduction:levels}
+
+Traditional x86 uses four-level paging
+(PML4~$\to$ PDPT~$\to$ PD~$\to$ PT~$\to$ Page). We classify levels into
+equivalence classes: \emph{root} (PML4), \emph{intermediate} (PDPT, PD), and
+\emph{leaf} (PT). The root is unique because no other link points to it; the
+leaf is unique because its entries carry distinct permission bits and point to
+data pages.
+
+We need enough levels to expose the non-atomic nature of the page walk.
+One level makes the walk atomic and is insufficient. Two levels
+(PML4~$\to$ PD~$\to$ PT) allow non-atomic behaviour for 4\,KB pages and
+cover all three equivalence classes. Each link variation can be decomposed into
+effects of individual links, so two levels encompass all interesting cases.
+
+We achieve two-level paging for 4\,KB pages by fixing the higher levels.
+
+\subsection{Physical PTE Addresses}\label{sec:reduction:pte}
+
+Different physical addresses represent the same entity, so repeating a test
+with different addresses does not present new behaviour. To determine the
+required number, we consider the maximum needed to represent a test scenario
+that cannot be decomposed into smaller tests.
+
+Physical addresses can be classified into those within the same page and those
+on different pages. Starting from a single page-aligned address, we need at
+least one intra-page address and one inter-page address, yielding a small
+finite set.
+
+% TODO: Finalise the concrete parameter values.
+
+%% ============================================================
+\section{Test-Case Generation}\label{sec:testgen}
+%% ============================================================
+
+The test cases take the form of traces of externally invocable actions---e.g.,
+writing a page-table entry, reading data memory---that correspond to the
+externally visible actions in the model. Rather than hand-crafting litmus
+tests, we automate the generation of a sufficiently exhaustive set of traces
+encompassing all possible behaviours, using the reduced model from
+\cref{sec:reduction}.
+
+% TODO: Describe the generation algorithm and coverage criteria.
+
+%% ============================================================
+\section{Testing Architecture}\label{sec:harness}
+%% ============================================================
+
+To execute the test traces and obtain corresponding results, we built a test
+harness using the Barrelfish operating system, ensuring execution as close to
+the hardware as possible.
+
+% TODO: Describe the harness architecture, how hardware state is
+% prepared (e.g., PWC entries), and how interference is minimised.
+
+%% ============================================================
+\section{Trace Analysis}\label{sec:analysis}
+%% ============================================================
+
+We approach verification of a trace against the model as a \emph{synthesis
+problem}. The model dictates the constraints, derived from states and
+transitions, and the externally observed events (together with the outputs
+from test execution) guide generation of potential internal-state transitions
+that justify the observed behaviour. When no such completion exists, the model
+is violated, directing its improvement.
+
+% TODO: Formalise the synthesis encoding and discuss scalability.
+
+%% ============================================================
+\section{Evaluation}\label{sec:eval}
+%% ============================================================
+
+% TODO: Present evaluation results.
+% - Number/type of generated test cases
+% - Execution statistics (time, hardware platform)
+% - Model violations found and model improvements made
+% - Scalability of the synthesis step
+
+%% ============================================================
+\section{Related Work}\label{sec:related}
+%% ============================================================
+
+% TODO: Discuss related work on hardware model validation, memory-model
+% testing (e.g., litmus tests), TLB/MMU modelling, and synthesis-based
+% verification.
+
+%% ============================================================
+\section{Conclusion}\label{sec:conclusion}
+%% ============================================================
+
+% TODO: Summarise contributions and outline future work.
+
+%% ============================================================
+%% Bibliography
+%% ============================================================
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
