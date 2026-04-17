@@ -1,0 +1,17 @@
+
+%% Abstract %%
+Context:
+System software is verified against formal models of hardware that
+essentially provides a specification of the environment in which
+software is run. The validity of the verification result depends
+on the accuracy of the model.  
+Problem: Model validation that relates the specified behavior with the observable behavior of real
+hardware is hard, as modern processors execute many (invisible)
+internal steps that influence the observable outcome, and worse,
+they execute these steps speculatively.  
+Approach: We present a validation methodology that lets us validate real traces against
+a formal model using a synthesis approach to reconstruct possible
+traces that explains the observed behavior on real hardware. To make
+this scale to real world examples, we present a reduction argument.
+We discuss various important considerations and blockers.  
+Results: We evaluate our approach on a model of the x86 MMU.

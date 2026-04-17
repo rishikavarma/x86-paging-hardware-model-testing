@@ -1,0 +1,137 @@
+
+\section{Reduction Argument}\label{sec:reduction} %%
+
+The model is expected to be consistent across variables like
+number of cores, virtual address, physical addresses etc however,
+testing the model across any possible value of these variables is
+impractical. Testing to verify correctness on very large traces
+with many external and internal actions will also cause state space
+explosion and becomes computationally inviable. To ensure efficiency
+and viability without compromising correctness, we propose a number of
+arguments that constrain the testing space while still representing
+any possible configuration. This idea comes from the small world
+argument that asserts that behaviours of the large state space with
+various possible configurations can be represented by a smaller sized
+subset of each parameter.
+
+The aspects we consider are: 
+\begin{itemize}
+  \item Number of cores 
+  \item Number of paging levels 
+  \item Number of virtual addresses 
+  \item Number of physical addresses for data
+  \item Number of physical addresses for page-table entries 
+  \item Length of each trace
+\end{itemize}
+
+We propose semi-formal arguments to constrain each of these variables
+to successfully restrict the model.
+
+TODO: Effects we do model to be mentioned
+
+As a proof of concept, we only consider legal page structures (We avoid
+situations like self-referencing ptes and address aliasing). We also
+do not take huge pages into consideration for our current testing
+scenarios.
+
+
+\subsection{Cores}\label{sec:reduction:cores}
+
+To decide the number of cores, we first consider how the number
+of cores affects the model. Naively, it appears that multiple cores
+modifying the same state causes races which creates effects we may want
+to model. But the reality is that there are two parts of the state:
+core-level state (TLB, Page Structure Cache, Store Buffers, etc) and
+the global state (Page table data memory). All cores share the global
+state and only the paging hardware is able to update the global state
+directly. Each core is able to update its own core-level state. Thus
+any synchronisation effects we want to observe directly relates to
+the core updating its in-core state and the hardware updating the
+global state based on changes in any of the cores(page table writes)
+or spontaneously by itself(writebacks, evictions, etc).  This results
+in only two different cases in testing: 1) How do different changes in
+the global state and local state affect the overall behaviour within a
+core, 2) Do global updates by the hardware based on local core updates
+follow total store order which is expected by our model. We need to
+have enough cores to test and observe the effects of both of these
+cases.  For the first case, it is immediately apparent that apart from
+the core in consideration for observing core-local effects, one other
+core is sufficient to induce global changes by the hardware. Thus 2
+cores are sufficient to test all situations of the first case.  In the
+second case we want to be able to identify cycles in read-write anti
+dependencies. For this case also we need only a minimum of 2 cores
+since we can test it based on a situation like this: Both cores write
+the same page table entry with different values, they first read the
+data memory corresponding to the appropriate virtual memory address
+of the other core’s write before writing and if both cores read the
+value correctly(No translation fails) then this indicates a cycle.
+This however is potentially hard to observe due to interference from
+other effects like caching, store buffers and so an easier way of
+testing this can use 4 cores such that: 2 cores each write and the
+other 2 cores each read. If the reading cores perceive different
+orders then there is a cycle.
+
+\subsection{Paging Levels}\label{sec:reduction:levels}
+
+Traditionally x86 has 4 level paging (PML4 → PDPT → PD →
+PT → Page). We argue that the levels can broadly be classified
+into equivalence classes of Root level, intermediate level and
+leaf level. Thus in the above x86 architecture, PML4 would be the
+root level, PDPT, PD would belong to the intermediate level and PT
+would be the leaf level. Among all the levels, the root level node
+is considered a separate entity since this is a single address that
+directs to the entire page table structure. There is no other link
+pointing to this root making it different from the other layers. The
+leaf level nodes are also considered a separate entity since these
+nodes have different permission bits representing the fact that they
+point to data memory pages. Thus, this behaviour can differ from the
+others and so is considered as a different entity as well.
+
+We want to be able to test the non-atomic nature of the page walk
+and all the different situations that this might result in. Thus, we
+approach the minimum number of levels we want to test with as that
+which is able to do so.  Having only 1 level(PML4->PT) definitely
+does not achieve this, since the page walk becomes atomic and does
+not represent non-atomic behaviours. This also does not have any
+intermediate level types. With 2 levels(PML4->PD->PT), we successfully
+allow non-atomic behaviour for pages of size 4KB. However, with
+pages of size 2MB, this reverts to the equivalent of 1-level(Only
+PML4->PD). For our modeling, we do not consider super pages for the
+purpose of our proof-of-concept model. Thus 2 levels (PML4->PD->PT)
+suffices to represent the non-atomicity for 4k pages that we aim
+to model.
+
+Another way of looking at this situation is that, in a given test
+we use data memory reads to observe different behaviours of the
+hardware. The data memory that is read for a given virtual address
+directly depends on the path taken by the page walk and the lowest
+unit of difference that results in a potential different result is a
+link. Thus even if there are multiple links different in a walk path,
+it can be broken down into the effects of 2 separate consequences
+resulting from each link’s variation. Now all we need to ensure is
+that we consider all types of links between different levels in the
+process of our testing. This we are able to achieve with 2 levels
+and so that encompasses all the interesting cases.
+
+Is this wrong(atomic claims): We achieve 2 level paging for 4KB pages
+by keeping the higher levels fixed.
+
+
+
+\subsection{Physical PTE Addresses}\label{sec:reduction:pte}
+
+Different physical addresses represent the same entity and so the same
+test with different physical addresses does not present an interesting
+situation. Thus to decide the number of physical addresses we need to
+consider, we want to be able to identify the maximum number required
+to identify a test situation that cannot be disintegrated into smaller
+tests exposing separate effects. Broadly, the physical address types
+can be classified into those within the same page and those that are
+pages apart.  Starting with a single page aligned address, we want
+to be able to consider atleast one address that is within that page
+and one that is on a different page. For ease, we can consider it to
+be a page away.
+
+
+
+% TODO: Finalise the concrete parameter values.

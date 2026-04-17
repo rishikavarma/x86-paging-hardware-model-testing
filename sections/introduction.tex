@@ -1,0 +1,70 @@
+%% ============================================================
+\section{Introduction}\label{sec:intro}
+%% ============================================================
+
+\subsection{Context}\label{sec:intro:context}
+
+To be able to verify the correctness of an application’s code has 
+many aspects. While the application’s own code is an integral aspect, 
+it is almost equally important for the application code to ensure that 
+the process environment is used correctly. This implies that we need 
+user process leverageable models of the process environment including 
+the operating system part and the hardware part. While the operating 
+system model part of the process environment can be derived from a 
+reduction of a verified specification of the operating system code, the 
+hardware model is not as straightforward. Documentation can help in 
+proposing a hardware model however, these are often lacking and 
+existing practices may be incorrect. Thus, to ensure correct process 
+environment specifications for applications to leverage, it is 
+essential that it is based upon a tested and robust hardware model. To 
+this end, we propose an initial exploration of the different aspects 
+required to validate a hardware model. We discuss how we use these 
+methods and our observations for the x86 paging hardware.
+
+\subsection{Problem}\label{sec:intro:problem}
+
+Testing the hardware model comes with challenges that are unique to 
+this scenario: In verifying software traditionally, we are able to 
+observe and identify every action that leads to a transition in state 
+defined by our model. In the case of the hardware model however, there 
+are many events that are triggered and happen within the hardware that 
+are not directly observable. Thus, we need to test that our model 
+encompasses observed behaviours using externally visible actions and 
+anticipating the internal events that can explain the behaviour seen. 
+For eg: in the case of paging, a partial page walk being cached is not 
+observable, however if this cached page walk is used later to complete 
+the page walk and read data memory, then depending on if the current 
+page writes do not match the observed read, the caching can be inferred.
+
+To be able to assert that our model is correct, there are 3 aspects to 
+consider: 1) we need exhaustive test cases that invoke all possible 
+behaviours in the hardware, 2) Using these test cases, we need to find 
+a way to test the hardware with as little interference from other 
+effects as possible, 3) We also need to verify that the observed 
+outcome from the tests is allowed by our proposed model.  Addressing 
+all of these would ensure that we have a robust hardware model.
+
+To assert that the model is correct, three aspects must be addressed:
+\begin{enumerate}
+	\item \textbf{Test-case generation.} Generate interesting test 
+cases (how can we get stimulus that can expose the interesting behavior 
+to validate the model)
+
+	\item \textbf{Test execution harness.} Test execution harness 
+(how can we execute the test such that the desired behavior is actually 
+exposable) with how do we get the hardware into a state for the tests 
+(e.g., how to set the PWC entries accordingly)
+
+	\item \textbf{Trace analysis.} Checking efficiently for 
+explainability. (How do we validate the observed trace against the 
+model (i.e., finding the hidden steps efficiently))
+
+\end{enumerate}
+Addressing all three aspects ensures a robust hardware model.
+
+\subsection{Approach}\label{sec:intro:approach}
+
+
+\subsection{Results}\label{sec:intro:results}
+
+% TODO: What are our results?

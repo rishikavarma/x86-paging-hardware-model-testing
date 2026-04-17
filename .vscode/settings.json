@@ -1,0 +1,4 @@
+{
+  "latex-workshop.docker.enabled": true,
+  "latex-workshop.docker.image.latex": "ghcr.io/ayaka-notes/texlive-full:2025.1"
+}

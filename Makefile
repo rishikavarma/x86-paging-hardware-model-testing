@@ -6,7 +6,9 @@ BIBTEX = bibtex
 
 all: $(PAPER).pdf
 
-$(PAPER).pdf: $(PAPER).tex references.bib
+SECTIONS = $(wildcard sections/*.tex)
+
+$(PAPER).pdf: $(PAPER).tex references.bib $(SECTIONS)
 	$(LATEX)  $(PAPER)
 	$(BIBTEX) $(PAPER)
 	$(LATEX)  $(PAPER)
