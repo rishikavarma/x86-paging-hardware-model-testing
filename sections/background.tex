@@ -4,17 +4,38 @@
 
 \subsection{Formal Hardware Models}\label{sec:bg:formal}
 
-% TODO: Discuss existing formal hardware models and their role in
-% software verification.
+Our goal is to capture the behaviour of the hardware as a model consisting of states and transitions between them. Concretely, we view a hardware model as a state-transition system. Transitions are labelled by actions, which we divide into \emph{observable} actions (externally invocable or externally visible events) and \emph{internal} actions.
 
-\subsection{Modern Hardware and Observable vs.\ Internal Events}%
-\label{sec:bg:observable}
+This separation lets us talk about two related traces. An \emph{observable trace} records only externally visible events,
+\[
+o_1, o_2, \dots, o_n,
+\]
+while an \emph{internal execution} records the full sequence of model steps,
+\[
+i_1, i_2, \dots, i_m.
+\]
+We write \(\pi\) for the projection that erases internal steps and keeps only observable events, so that \(\pi(i_1 \dots i_m) = o_1 \dots o_n\). We say the model \emph{explains} an observed trace if there exists an internal execution in the model whose projection matches that trace. This yields an \emph{explainability} relation between observed behaviour and the model.
 
-% TODO: Describe the distinction between externally observable events
-% (e.g., memory reads/writes) and internal micro-architectural events
-% (e.g., TLB fills, speculative walks, cache evictions).
+This paper focuses on \emph{model validation} rather than using the model as a trusted oracle. Informally, a hardware model is correct if every observable behaviour produced by the processor can be explained by some execution in the model. Equivalently, the model should not rule out any behaviour the hardware can actually exhibit.
 
-\subsection{Software Synthesis}\label{sec:bg:synthesis}
 
-% TODO: Introduce the synthesis problem and how it relates to
-% reconstructing internal traces from observed behaviour.
+\subsection{x86 Paging and Translation Structures}\label{sec:bg:paging}
+
+Address translation on x86 is implemented via multi-level page tables and page walks. A translation may be served from a translation lookaside buffer (TLB) or may require a walk that reads paging structures from memory. Importantly for our setting, page walks are not atomic: the processor may perform multi-step walks, cache intermediate results in paging-structure caches (often described as page-structure caches), and reuse translations across time. Invalidation mechanisms (e.g., per-address invalidation and context changes) do not necessarily correspond to a simple ``flush everything'' semantics at the microarchitectural level, and translations may survive certain updates depending on the details of the implementation and the sequence of events.
+
+These effects matter because the externally visible outcome of a load from a virtual address depends not only on the current contents of paging structures, but also on which internal translation state (TLB entries, cached walk results, speculative translations) the processor chooses to reuse or refresh. This is precisely the gap that motivates hidden-step reconstruction.
+
+
+\subsection{Observability and Hidden Events}\label{sec:bg:observable}
+
+In our experiments, we can directly issue only a limited set of operations (e.g., writes to paging structures, invalidations, and reads that return architecturally visible values). Many relevant events remain latent: speculative walks, TLB fills, cache fills/evictions, translation reuse, and writebacks. As a result, we do not observe the internal execution \(i_1 \dots i_m\) directly; we only observe its projection \(\pi(i_1 \dots i_m)\).
+
+This partial observability creates a fundamental ambiguity: multiple distinct internal executions may project to the same observable trace. For paging, this can arise because an observed read could be served by a newly performed walk, a reused translation, or a translation derived from cached intermediate walk state. The goal of validation is therefore not to recover the ``true'' internal execution, but to decide whether \emph{some} internal execution consistent with the model can explain what we observed.
+
+
+\subsection{Synthesis-Based Explainability Checking}\label{sec:bg:synthesis}
+
+Given an observed trace, we cast validation as a synthesis problem: the observed events constrain the possible executions, the model constrains which transitions are legal, and a solver searches for an internal execution whose projection matches the observation. If the search succeeds, we obtain a witness execution (including hidden steps) that explains the trace under the current model. If the search fails, the trace is unexplained and constitutes evidence that the model is incomplete or incorrect. This existential ``explainability checking'' aligns naturally with the partial observability of modern processors.
+
+\paragraph{Small scope hypothesis.}
+The space of possible hardware configurations and traces is enormous, so any practical validation strategy must reduce the search space. We build on the intuition behind small-scope (and litmus-test-style) reduction arguments: many interesting behaviours can be exposed in small executions with carefully chosen stimuli, and counterexamples often have small witnesses. This supports the reductions we apply in \Cref{sec:reduction} to make validation computationally viable without changing the class of behaviours we aim to capture.
