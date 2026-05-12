@@ -47,9 +47,43 @@ Another way of looking at this situation is that, in a given test we use data me
 
 \subsection{Physical PTE Addresses}\label{sec:reduction:pte}
 
-Different physical addresses represent the same entity and so the same test with different physical addresses does not present an interesting situation. Thus to decide the number of physical addresses we need to consider, we want to be able to identify the maximum number required to identify a test situation that cannot be disintegrated into smaller tests exposing separate effects. Broadly, the physical address types can be classified into those within the same page and those that are pages apart.  Starting with a single page aligned address, we want to be able to consider atleast one address that is within that page and one that is on a different page. For example, we can consider it to be a page away. 
+Different physical addresses may name different bytes, but for the purposes of
+our model many absolute addresses differ only by a uniform relocation of the
+page tables and therefore do not change the qualitative MMU story. What we
+cannot remove, however, is enough \emph{distinct} paging-structure locations to
+instantiate the walk patterns we care about.
 
-% We need atleast 2 full walks at the very least?
+A recurring scenario in our testing is to have \emph{at least two page walks}
+(two translations) whose trajectories share a common prefix through the paging
+hierarchy and then diverge. Only such pairs can exercise interactions between
+partially completed or cached walk state for the shared prefix and the
+distinct suffixes (including concurrent walks to two virtual addresses that
+agree on high-level table links). Walks whose table paths are completely disjoint
+can be argued separately (a standard decomposition / separation intuition), so
+the largest ``undecomposable'' case for paging-structure placement is driven by
+this shared-prefix requirement. For ordering related testing it is clear that one walk worth of page table entries is sufficient and so it doesn't create the largest test case.
+
+Consider the reduced two-level hierarchy from \Cref{sec:reduction:levels} (PML4
+\(\rightarrow\) PD \(\rightarrow\) PT). For two walks with a shared prefix, both
+walks read the same entries along the shared part of the hierarchy and then
+diverge at the first level where their paths differ. Concretely, we need physical
+addresses for the PML4 slot(s) and PD slot(s) that realise that shared prefix, and
+we need \emph{two} distinct leaf PT slots (two physical addresses of page-table
+entries at the leaf).
+
+We retain both of the following leaf placements in our testing space, because
+they are not interchangeable for MMU behaviour: (i) \emph{intra-page}-two leaf
+PTEs at different byte offsets within the same 4KB PT page (same page-aligned
+physical page for the leaf table); and (ii) \emph{inter-page}-two leaf PTEs whose
+page-aligned physical addresses lie on \emph{different} 4KB pages (two distinct PT
+pages, reached while still admitting a shared-prefix pair of walks, e.g.\ by
+sharing the PML4 prefix and then branching through different PD slots that point
+to different PT pages). Together, these cover shared-prefix divergence that ends
+in two slots of one leaf page and shared-prefix divergence that ends in PTEs on
+different leaf pages, which is the address budget we use for two-level paging
+rather than collapsing to only one of the two cases.
+
+% We need 2 full walks at the very least?
 % Assume no need walking of same walk
 % Dont consider walks that are completely different virtual address
 % Do we consider is walk wrong
@@ -62,7 +96,34 @@ Different physical addresses represent the same entity and so the same test with
 
 % TODO: Finalise the concrete parameter values.
 \subsection{Virtual Addresses}\label{sec:reduction:vaddr}
-Virtual addresses can also be reduced because, as long as the walk of two different virtual addresses are similar then those two virtual addresses act in similar ways in the test making them redundant. We can also venture to propose that similar mapping can be defined in terms of whether that link is mapped or unmapped. Thus, given a virtual address it can be mapped in different ways for the purpose of our test and so the exact value of the virtual address is unimportant except for whether or not it is a page aligned address. Thus we decide the maximum number of addresses needed for a single undecomposable test similar to physical address count. 
+Virtual addresses can also be reduced because, as long as the page-walk structure
+for two virtual addresses is the same, those addresses induce the same sequence
+of paging-structure lookups and differ only in irrelevant bit patterns. This is similar to the physical address reduction argument. For the
+behaviours we target, the important distinctions are: (i) whether an address is
+page-aligned (so that the data read is unambiguous at page granularity), and
+(ii) which parts of the walk are shared with other addresses (so that cached
+intermediate results can be reused).
+
+We model ``similar'' mappings in terms of the walk graph: for each level, the
+relevant question is whether the corresponding link is mapped or unmapped, and
+when mapped, whether two addresses share the same prefix so that their walks
+share a common path through the paging structures. This motivates a small set of
+representative virtual addresses:
+(1) a primary address \(v\) whose mapping we update and whose data-memory read we
+use as the observable outcome, and
+(2) a secondary address \(v'\) that shares a prefix with \(v\) (so that the MMU
+may reuse cached intermediate walk results or a translation derived from that
+prefix). Any additional address that does \emph{not} share a prefix with \(v\)
+induces a disjoint walk; its effects can be tested in isolation and does not
+need to be included in the same largest ``undecomposable'' test.
+
+Finally, different shared-prefix lengths do not fundamentally increase coverage:
+if the MMU can skip a portion of a walk by reusing cached intermediate results,
+then the existence of reuse is the key effect, not the exact number of levels
+skipped. Because our reduced paging structure already contains a root,
+intermediate, and leaf class (\Cref{sec:reduction:levels}), choosing one
+representative shared-prefix case suffices to expose prefix-level reuse and its
+interaction with updates and invalidations.
 
 
 % How to reason about biggest test case?
@@ -78,3 +139,14 @@ Virtual addresses can also be reduced because, as long as the walk of two differ
 % One at the tlb level and one at the prefix level, 2 updates to the path, Invalidation 
 % Maybe have a figure like 3 in: https://dl.acm.org/doi/epdf/10.1145/2024724.2024842
 % Use arm to manually invalidate perhaps in future?
+
+\subsection{Physical Data Memory Addresses}\label{sec:reduction:paddr}
+Similar to virtual addresses, we also reason about the number of physical addresses required for data memory by trying to find the largest test undecomposable test case which uses the maximum number of data memory physical addresses. The data memory addresses are the positions where the actual data is stored (not page table entries). These addresses are the final links stored in the page table which connect the virtual address to the physical location in memory. While in practice there is no real separation between data memory addresses and page table memory addresses, for the purpose of simplicity we consider them separately in our model and this can be changed for a more accurate and improved model. 
+It is apparent that from the data memory's perspective, we need to be able to have atleast two addresses to test scenarios such as a virtual address being initially mapped to one address and then mappings are changed to reflect the other resulting in potential stale data reads. Similarly, two addresses are also required for the test case discussed in section~\ref{sec:reduction:vaddr} where we observe the effects of diverging walks for virtual addresses that share a prefix. Testing scenarios related to total store ordering is similar to the previous assertions as well and only requires one physical address making it not the largest test. 
+
+% Can a walk be cached until PT?
+% Ask cursor to generate example test cases of all the things mentioned in this section and ref them accordingly. Using as few test cases as possible. Format mentioned in the paper.
+% What is our evaluation?
+
+\subsection{Trace length}\label{sec:reduction:trace}
+We also want to be able to reason about what is the longest observable trace length we want to generate which can reasonably cover all undecomposable test cases. 
