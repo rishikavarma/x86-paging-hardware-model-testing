@@ -8,11 +8,16 @@ all: $(PAPER).pdf
 
 SECTIONS = $(wildcard sections/*.tex)
 
-$(PAPER).pdf: $(PAPER).tex references.bib $(SECTIONS)
-	$(LATEX)  $(PAPER)
-	$(BIBTEX) $(PAPER)
-	$(LATEX)  $(PAPER)
-	$(LATEX)  $(PAPER)
+# Seed a valid empty .bbl before the first LaTeX pass: natbib/acmart otherwise
+# write a stub with doubled backslashes, which breaks \input{paper.bbl}.
+$(PAPER).pdf: $(PAPER).tex references.bib $(SECTIONS) support/empty-bibliography.bbl
+	cp support/empty-bibliography.bbl $(PAPER).bbl
+	$(LATEX) $(PAPER)
+	@if grep -q '^\\citation{' $(PAPER).aux 2>/dev/null; then $(BIBTEX) $(PAPER); fi
+	$(LATEX) $(PAPER)
+	$(LATEX) $(PAPER)
 
 clean:
-	rm -f $(PAPER).{aux,bbl,blg,log,out,pdf,fls,fdb_latexmk,synctex.gz}
+	rm -f $(PAPER).aux $(PAPER).bbl $(PAPER).blg $(PAPER).log \
+		$(PAPER).out $(PAPER).pdf $(PAPER).fls $(PAPER).fdb_latexmk \
+		$(PAPER).synctex.gz

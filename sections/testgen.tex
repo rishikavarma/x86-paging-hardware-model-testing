@@ -2,6 +2,18 @@
 \section{Test-Case Generation}\label{sec:testgen}
 %% ============================================================
 
+To be able to analyse the observable traces to identify if they are allowed by the model, we should first generate a set of traces based on our reduction arguments. This consists of two parts: 1) Generating test cases which consist of a set of stimuli for the hardware to execute and 2) executing these test cases to retreive the results and create the observable traces for analysis. In this section we discuss our efforts in generating a representative set of test cases that covers the behaviours we are primarily interested in. The subsequent sections will discuss the execution of these test cases and the analysis of the observable traces.
+Based on our reduction arguments, we now have a set of constraints on the test cases based on which we base our generation of test cases. These constraints guide aspects like the number of cores, the number of virtual addresses, the number of physical addresses for data and page table entries, and the length of the trace. 
 
+To generate each test case, we start by considering all possible states of the constrained page table in the form of a graph. The nodes of the graph represent the legally allowed states of the page table (preventing states like cycles, aliasing, etc) and the edges represent the transitions between these states through the only action that can cause such a transition: writing a page table entry. 
+We then generate a set of test cases by randomly selecting a starting node. This is followed by randomly selecting one of the various possible actions:
+\begin{itemize}
+    \item Write page table entry.
+    \item Read virtual memory address.
+    \item Write virtual memory address. % Currently does not support this in the implementation.
+    \item Invalidate page.
+    \item Barrier.
+\end{itemize}
+For each of these, the arguments including the core id are also randomly selected. We repeat this process until the trace length is reached. We also seed the probabilities for each action to ensure that the test cases so that we do not waste time with spurious and uninformative test cases. We also ensure to add atleast one read that succeeds and atleast one read that fails due to existence of translation to ensure that we cover all possible behaviours and skip traces where there is no virtual address that can be read successfully.
 
 % TODO: Describe the generation algorithm and coverage criteria.

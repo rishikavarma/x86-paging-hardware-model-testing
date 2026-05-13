@@ -2,9 +2,22 @@
 \section{Testing Architecture}\label{sec:harness}
 %% ============================================================
 
-To execute the test traces and obtain corresponding results, we built a test
-harness using the Barrelfish operating system, ensuring execution as close to
-the hardware as possible.
+An important aspect of this process is also to test the hardware model with as little interference from other effects of the operating system as possible. The test harness is responsible for setting up the hardware state for the test cases and executing the test cases. It also ensures that the test cases are executed in a way that is as close to the hardware as possible. Ideally, to make our tests close to the hardware, the best possible solution is to custom build a harness from the ground up which has just enough functionality to run our tests and retrieve the results on the bare metal hardware. However, in our case, in the interest of using a simpler approach to create a harness by avoiding redundant implementations for processes like booting which already exist, while still ensuring that we can execute the test as close to the hardware as possible without any interference from other parts of the existing operating system code, we decided to use a modification of the Barrelfish operating system as the test harness. Since Barrelfish is a relatively small operating system, it is feasible to modify it to add the necessary functionality to run our tests while also ensuring that no other effects of the operating system may impact or interfere with the test execution.
 
-% TODO: Describe the harness architecture, how hardware state is
-% prepared (e.g., PWC entries), and how interference is minimised.
+We achieved this by adding a system call to the Barrelfish Operating System within which the test is executed.
+
+We use a lightly modified Barrelfish kernel as the harness so we can boot real hardware once and then run experiments without building a custom runtime from scratch. Tests are included into the kernel and the user space asks the kernel to run a paging experiment which the kernel performs in a controlled context with little involvement from the rest of the OS.
+
+The kernel uses a pre-allocated block of physical memory as scratch space for page-table pages and test data frames. It installs initial minimal translations in that region, updates entries, and performs loads and stores as the scenario requires. It then records the observable memory behaviour to be used during analysis of the complete observable trace to identfy if this behaviour is allowed by the model. The intent is to exercise translation and caching effects on silicon while keeping the environment as small and predictable as possible.
+
+The implementation includes a set of library functions: 
+\begin{itemize}
+    \item Writing a page table entry. (action and setup initial state)
+    \item Writing to a physical memory address. (setup initial state)
+    \item Writing to a virtual memory address. (action)
+    \item Reading from a virtual memory address. (action)
+    \item Invalidation of a virtual memory address. (action)
+    \item Barrier. (action)
+\end{itemize}
+
+This simplifies the test case generation as it can directly use these functions to set up the hardware state for the test cases and execute them. For the best possible results, all the utilities need to be implemented using inline assembly but currently the implementation is a combination of inline assembly and C code but this can be trivially improved.
