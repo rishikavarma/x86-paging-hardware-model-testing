@@ -14,6 +14,6 @@ We then generate a set of test cases by randomly selecting a starting node. This
     \item Invalidate page.
     \item Barrier.
 \end{itemize}
-For each of these, the arguments including the core id are also randomly selected. We repeat this process until the trace length is reached. We also seed the probabilities for each action to ensure that the test cases so that we do not waste time with spurious and uninformative test cases. We also ensure to add atleast one read that succeeds and atleast one read that fails due to existence of translation to ensure that we cover all possible behaviours and skip traces where there is no virtual address that can be read successfully.
+For each of these, the arguments including the core id are also randomly selected. We repeat this process until the trace length is reached. We also seed the probabilities for each action to ensure that the test cases so that we do not waste time with spurious and uninformative test cases. We also ensure to add atleast one read that succeeds and atleast one read that fails due to existence of translation to ensure that we cover all possible behaviours and skip traces where there is no virtual address that can be read successfully. The final obtained trace is then separated into the respective core's parts and written as a test in the right format into a file for execution by the harness.
 
 % TODO: Describe the generation algorithm and coverage criteria.

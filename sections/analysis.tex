@@ -4,3 +4,22 @@
 
 
 % TODO: Formalise the synthesis encoding and discuss scalability.
+Once we have our observable traces, the goal is to identify if they are allowed by the model. To do this, we propose to synthesize any internal execution that matches the observable trace. This is a synthesis problem and we can use a solver to find a solution. The solver will need to consider the model and the observable trace and find a sequence of internal actions that match the observable trace. If the solver finds a solution, we have a witness execution that matches the observable trace and the model is correct. If the solver does not find a solution, we have a counterexample that the model is incorrect. 
+To encode the synthesis problem, we need to consider the model and the observable trace. The model is a state-transition system and the observable trace is a sequence of observable actions. We can encode the model as a set of constraints and the observable trace as another constraint such that the synthesized solution contains the observable trace along with the internal actions. The solver will need to find the corresponding sequence of internal actions to be interleaved with the observable trace based on the model constraints. We structured the synthesis problem to generate a trace of all the cores together in a linear order.
+
+For the purpose of our efforts, we used Rosette(a program synthesis library built using Racket) to encode the synthesis problem. The greatest challenge in this process was to ensure that the synthesis problem is scalable and does not explode computationally. We tried to achieve this by the same reduction arguments mentioned in section~\ref{sec:reduction}. This was not entirely successful and we were only able to synthesize simple traces with a small number of steps (1-2 internal actions) and upto 2 cores in certain cases. 
+We believe that this can be improved in several complementary ways:
+
+\begin{itemize}
+  \item \textbf{Coarser walk structure and overlap-based reasoning.}
+  Instead of letting the solver choose each fine-grained walk micro-step, one can introduce a single \emph{walk} macro-step that stands for an entire walk history, with internal ordering resolved only where it matters.
+  With concurrent walks, many pairs are effectively \emph{quiescent}: walks that do not overlap a modification to the paging structures they consult can often be treated as atomic with respect to those updates, which shrinks the interleaving space.
+  What then matters is (i) whether a walk is \emph{in flight} over a virtual-address range while paging structures for that range are being modified, and (ii) where in that window the update becomes architecturally visible relative to the walk.
+  A useful abstraction is to think of a walk as alternating \emph{remote} paging-structure writes $R$ (from other cores) with level transitions $L_i$, e.g.\ $\textsc{Walk} := [R]\,L_1\,[R]\,L_2\,\cdots$ (some $L_i$ may be skipped when served from a cache), where each $R$ is one or more writes to page-table pages that are actually on the walk path for that translation.
+
+  \item \textbf{Per-core abstraction and pruned action sets.}
+  Another reduction is to ignore, where sound, non-write events from other cores when reasoning about a given core's translation story, or to separate each core's contribution and only merge at explicit synchronization points.
+  More generally, the transition relation need not expose every action at every state: domain knowledge from the reduction argument (Section~\ref{sec:reduction}) can cut down the actions eligible from each state, rather than enumerating a full Cartesian product of interleavings.
+  That aligns with the spirit of the prototype encoding in \texttt{trace\_test.rkt}---a fixed grammar over internal steps---but pushes the grammar toward fewer, semantically meaningful families of steps instead of maximally fine-grained ones.
+\end{itemize}
+
