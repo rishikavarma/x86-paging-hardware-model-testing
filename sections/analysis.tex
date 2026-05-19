@@ -15,11 +15,9 @@ We believe that this can be improved in several complementary ways:
   Instead of letting the solver choose each fine-grained walk micro-step, one can introduce a single \emph{walk} macro-step that stands for an entire walk history, with internal ordering resolved only where it matters.
   With concurrent walks, many pairs are effectively \emph{quiescent}: walks that do not overlap a modification to the paging structures they consult can often be treated as atomic with respect to those updates, which shrinks the interleaving space.
   What then matters is (i) whether a walk is \emph{in flight} over a virtual-address range while paging structures for that range are being modified, and (ii) where in that window the update becomes architecturally visible relative to the walk.
-  A useful abstraction is to think of a walk as alternating \emph{remote} paging-structure writes $R$ (from other cores) with level transitions $L_i$, e.g.\ $\textsc{Walk} := [R]\,L_1\,[R]\,L_2\,\cdots$ (some $L_i$ may be skipped when served from a cache), where each $R$ is one or more writes to page-table pages that are actually on the walk path for that translation.
 
   \item \textbf{Per-core abstraction and pruned action sets.}
   Another reduction is to ignore, where sound, non-write events from other cores when reasoning about a given core's translation story, or to separate each core's contribution and only merge at explicit synchronization points.
   More generally, the transition relation need not expose every action at every state: domain knowledge from the reduction argument (Section~\ref{sec:reduction}) can cut down the actions eligible from each state, rather than enumerating a full Cartesian product of interleavings.
-  That aligns with the spirit of the prototype encoding in \texttt{trace\_test.rkt}---a fixed grammar over internal steps---but pushes the grammar toward fewer, semantically meaningful families of steps instead of maximally fine-grained ones.
 \end{itemize}
 
