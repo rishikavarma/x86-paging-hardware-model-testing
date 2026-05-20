@@ -14,8 +14,10 @@ system model part of the process environment can be derived from a
 reduction of a verified specification of the operating system code, the 
 hardware model is not as straightforward. Documentation can help in 
 proposing a hardware model however, these are often lacking and 
-existing practices may be incorrect. Thus, to ensure correct process 
-environment specifications for applications to leverage, it is 
+existing practices may be incorrect. Prior work on trustworthy processor
+specifications argues that formal environments must be validated against
+implementations, not taken on faith~\cite{reid2016trustworthy,armstrong2019sail}.
+Thus, to ensure correct process environment specifications for applications to leverage, it is 
 essential that it is based upon a tested and robust hardware model. To 
 this end, we propose an initial exploration of the different aspects 
 required to validate a hardware model. We discuss how we use these 
@@ -63,7 +65,7 @@ model (i.e., finding the hidden steps efficiently))
 Addressing all three aspects ensures a robust hardware model.
 
 \subsection{Approach}\label{sec:intro:approach}
-We discuss the approaches that we explored in addressing each of these aspects. The test cases for this model are in the form of traces of externally invocable actions that correspond to the externally visible actions in the model, eg: writing a page table entry, reading data memory, etc. Instead of the traditional approach of handcrafting various litmus tests that target interesting scenarios, we sought to automate the generation of a sufficiently exhaustive set of traces which encompass all possible behaviours.
+We discuss the approaches that we explored in addressing each of these aspects. The test cases for this model are in the form of traces of externally invocable actions that correspond to the externally visible actions in the model, eg: writing a page table entry, reading data memory, etc. Instead of the traditional approach of handcrafting various litmus tests that target interesting scenarios~\cite{owens2009x86tso,alglave2011litmus,alglave2014herding}, we sought to automate the generation of a sufficiently exhaustive set of traces which encompass all possible behaviours.
 % TODO: test cases part
 To execute the test traces to obtain corresponding results, we built a test harness using the barrelfish operating system ensuring that we execute as close to the hardware as possible. 
 Finally, we propose the idea of approaching verification of a trace against the model as a synthesis problem. The model itself dictates the constraints which are derived from the states and transitions, and the externally observed events (along with the outputs from the test execution) guides generation of potential internal state transitions that justify the observed behaviour. In the case that we do not find any such completed traces, it indicates a violation in the model and can direct improvement of the model. 

@@ -1,13 +1,11 @@
 %%% references.bib — Bibliography for the PLOS 2026 paper
 
-%%% Example entries (replace / extend as needed)
-
-@inproceedings{sewell2010x86tso,
+@article{sewell2010x86tso,
   author    = {Sewell, Peter and Sarkar, Susmit and Owens, Scott and
                Nardelli, Francesco Zappa and Myreen, Magnus O.},
   title     = {{x86-TSO}: A Rigorous and Usable Programmer's Model for
                x86 Multiprocessors},
-  booktitle = {Communications of the ACM},
+  journal   = {Communications of the ACM},
   volume    = {53},
   number    = {7},
   pages     = {89--97},
@@ -15,13 +13,61 @@
   doi       = {10.1145/1785414.1785443},
 }
 
-@inproceedings{alglave2014herding,
+@inproceedings{owens2009x86tso,
+  author    = {Owens, Scott and Sarkar, Susmit and Sewell, Peter},
+  title     = {A Better x86 Memory Model: x86-{TSO}},
+  booktitle = {Proceedings of PLDI},
+  year      = {2009},
+  doi       = {10.1145/1542471.1542490},
+}
+
+@inproceedings{alglave2011litmus,
+  author    = {Alglave, Jade and Maranget, Luc and Sarkar, Susmit and Sewell, Peter},
+  title     = {Litmus: Running Tests against Hardware},
+  booktitle = {Proceedings of TACAS},
+  year      = {2011},
+  doi       = {10.1007/978-3-642-19835-9_5},
+}
+
+@article{alglave2014herding,
   author    = {Alglave, Jade and Maranget, Luc and Tautschnig, Michael},
   title     = {Herding Cats: Modelling, Simulation, Testing, and Data
                Mining for Weak Memory},
-  booktitle = {ACM Transactions on Programming Languages and Systems},
+  journal   = {ACM Transactions on Programming Languages and Systems},
   volume    = {36},
   number    = {2},
   year      = {2014},
   doi       = {10.1145/2627752},
+}
+
+@inproceedings{reid2016isaf,
+  author    = {Reid, Alastair},
+  title     = {End-to-End Verification of {ARM} Processors with {ISA-Formal}},
+  booktitle = {Proceedings of CAV},
+  year      = {2016},
+}
+
+@inproceedings{reid2016trustworthy,
+  author    = {Reid, Alastair},
+  title     = {Trustworthy Specifications of {ARM} v8-A and v8-M System Level
+               Architecture},
+  booktitle = {Proceedings of FMCAD},
+  year      = {2016},
+}
+
+@inproceedings{armstrong2019sail,
+  author    = {Armstrong, Alasdair and Bauereiss, Thomas and Campbell, Brian and
+               Reid, Alastair and {others}},
+  title     = {{ISA} Semantics for {ARMv8-A}, {RISC-V}, and {CHERI-MIPS}},
+  booktitle = {Proceedings of POPL},
+  year      = {2019},
+  doi       = {10.1145/3290384},
+}
+
+@inproceedings{goldweber2024ironspec,
+  author    = {Goldweber, Eli and Yu, Weixin and
+               {Vakil Ghahani}, Seyed Armin and Kapritsos, Manos},
+  title     = {{IronSpec}: Increasing the Reliability of Formal Specifications},
+  booktitle = {Proceedings of OSDI},
+  year      = {2024},
 }
