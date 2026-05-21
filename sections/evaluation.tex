@@ -7,3 +7,28 @@
 % - Execution statistics (time, hardware platform)
 % - Model violations found and model improvements made
 % - Scalability of the synthesis step
+
+
+\subsection{Reduction sanity check using litmus tests}
+\label{sec:eval:litmus-reduction}
+
+One prelimnary way of analysing whether our reduction arguments are sound is to compare existing litmus tests~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding} to see if standard tests are generatable in our model despite the reduction. While this still does not guarantee correctness, this gives further confidence on the validity of our reduction arguments and can also be used to guide improvements. We use the store buffering litmus test as an example to emphasize this expectation. This can be extended to other litmus tests as well.
+
+\paragraph{Store buffering.}
+The classic store-buffering test~\cite{diySBlitmus} has two threads, each writing one location and
+then reading the other:
+\[
+\begin{array}{c@{\qquad}c}
+P0: W(x)=1 & P1: W(y)=1 \\
+\phantom{P0: }R(y)=0 & \phantom{P1: }R(x)=0
+\end{array}
+\]
+with \(x=y=0\) initially.  The outcome in which both reads see the initial value
+is allowed by x86-TSO but forbidden under sequential consistency. 
+% In the reduced paging model this fits within two cores, one pending PTE write per core, and reads that occur before the corresponding writebacks.  The buffered stores
+
+
+\subsection{Trace Analysis}
+
+As discussed in \Cref{sec:analysis}, trace analysis becomes computationally expensive unless encoded efficiently. We show a brief example of internal trace synthesis in two cases, one where the model allows a trace and one where it does not as a proof of concept. This can be extended to larger traces and more complex models as well and we leave this for future work.
+
