@@ -1,7 +1,13 @@
 
 \section{Reduction Argument}\label{sec:reduction} %%
 
-The model is expected to be consistent across variables like number of cores, virtual address, physical addresses etc however, testing the model across any possible value of these variables is impractical. Testing to verify correctness on very large traces with many external and internal actions will also cause state space explosion and becomes computationally inviable. To ensure efficiency and viability without compromising correctness, we propose a number of arguments that constrain the testing space while still representing any possible configuration. This idea comes from the small world argument that asserts that behaviours of the large state space with various possible configurations can be represented by a smaller sized subset of each parameter. 
+The model is expected to be consistent across variables like number of cores,
+virtual addresses, physical addresses, etc. However, testing the model across
+every possible value of these variables is impractical. Testing the model on
+very large traces with many external and internal actions also causes state
+space explosion and quickly becomes computationally inviable. Thus, for the
+purpose of generating tests, we explore how far the testing space can be
+reduced and we propose a number of informal arguments to reduce the testing space. While these arguments are not complete proofs of sufficiency, they are working reduction arguments which try to identify small representative configurations that still seem capable of exposing the behaviours we care about. Robust proofs would be necessary before these bounds could be treated as complete or final. For the proof-of-concept model, however, these arguments give us a principled way to keep the generated tests tractable. This is similar in spirit to small world or small scope arguments, where behaviours in a large state space are often expected to have small witnesses.
 
 The aspects that we consider relevant to this model that need consideration are:
 
@@ -14,10 +20,17 @@ The aspects that we consider relevant to this model that need consideration are:
   \item Length of each trace
 \end{itemize}
 
-We propose semi-formal arguments to constrain each of these variables to successfully restrict the model. We trivially assert that having enough resources for largest (most resource consuming for each resource type) test to be generated is sufficient for each. We thus, try to identify what size the largest test for each would be and accordingly decide the resource count for each.
+For each of these aspects, we ask what the smallest non-obviously-unsound
+bound seems to be. In other words, we try to identify the largest
+undecomposable test case for that resource: a test that cannot clearly be
+split into smaller independent tests without losing the behaviour being
+observed. The resulting bounds are therefore exploratory and are used to guide
+test generation rather than to establish a final theorem.
 
 % TODO: Effects we do model to be mentioned
-As a proof of concept, we only consider legal page structures (We avoid situations like self-referencing ptes and address aliasing). We also do not take huge pages into consideration for our current testing scenarios.
+As a proof of concept, we only consider legal page structures (we avoid
+situations like self-referencing PTEs and address aliasing). We also do not
+take huge pages into consideration for our current testing scenarios.
 
 
 
@@ -151,4 +164,16 @@ It is apparent that from the data memory's perspective, we need to be able to ha
 % For the litmus test figure how do we represent initial PTE states?
 
 \subsection{Trace length}\label{sec:reduction:trace}
-We also want to be able to reason about what is the longest observable trace length we want to generate which can reasonably cover all undecomposable test cases. 
+We also want to be able to reason about what is the longest observable trace length we want to generate which can reasonably cover all undecomposable test cases. Similar to the previous arguments, we consider the largest test from the perspective of the core whose behaviour we are trying to observe. From \Cref{sec:reduction:cores}, the only actions of the other cores that can affect this core are writes that eventually change the global paging state. Thus, for this reduction, the trace length that matters is the observing core's own actions along with the page table writes in the other cores that may affect the page walk used by this core. Other reads in the other cores do not change the state relevant to this core's translation and so do not need to be counted while deciding the largest undecomposable trace.
+
+As discussed in \Cref{sec:reduction:vaddr} and \Cref{sec:reduction:pte}, the interesting cases are those where page walks share some part of the paging structure and then diverge. A write to a leaf PTE on a completely disjoint path from the observing core's walk is therefore non-interfering for this test and can be considered separately. The cases that do need to be considered together are writes to the same leaf PTE, writes to an intermediate PTE and a leaf PTE on the same path, or writes to an intermediate PTE that is shared by the virtual addresses considered in \Cref{sec:reduction:vaddr}. These are the situations where the page walk can observe some combination of old and new paging structure state, or where a cached prefix of the walk can affect the final translation observed.
+
+We assume that initial state of the experiment is set such that certain general PTE entries are present corresponding to the virtual addresses that are being tested which can then be modified during the test (update or invalidate), and the data memory has unique values that have already been initially written. We claim that two such PTE writes are sufficient to represent the largest undecomposable trace with respect to writes by other cores. If there are two writes on the relevant path, then a read by the observing core may correspond to any of three states: the initial state, the state after the first write, or the state after the second write. This covers the important cases of seeing stale state, seeing an intermediate state, or seeing the final state. Adding a third write does not introduce a qualitatively new observation, since any observed result can be reduced to the pair of writes that surround the state being observed. This is true whether the writes are both at the leaf level, both at an intermediate level, or split between an intermediate level and a leaf level. If the additional write is on a disjoint path then it can be decomposed away, and if it is on the same path then it only adds another instance of the same before/after relation already represented by two writes. These writes could be either writes by the observing core or by other cores.
+
+Now to be able to observe the effects of the writes, we need to be able to observe the different states of the data memory. We can do this by having the observing core read the data memory before and after the writes are performed. This will allow us to observe the different states of the data memory and the different states of the paging structure. Since each write can affect the corresponding virtual address, at a maximum we should be able to observe the change for all virtual addresses at the initial, intermediate and final states. This will give us the maximum trace length that we need to generate.
+
+We also need to account for tests that experiment with barriers and page invalidations. Since we consider each core's trace separately and barrier only has impact on whether the writes of this core are globally visible, we can ignore that in our observed core's trace. In the non-observing trace, barriers can be interleaved with the writes and so results in the same maximum trace length. Invalidating page can also be treated similar to page table writes (page invalidation affects correpsonding virtual address) and so this als results in the same maximum trace length.
+
+% The values written to the PTEs also do not require us to increase the trace length. Changing a mapping from one physical data address to another and clearing a PTE so that the translation fails both represent a change in the result of the walk. The first case produces a different data memory read, using the two physical addresses already argued for in \Cref{sec:reduction:paddr}, while the second produces no translation. Similarly, if a PTE is initially invalid and is then made valid but the observed read still produces no translation, the behaviour can be explained by the walk having observed the invalid entry before the write was visible; it is not a separate cache effect requiring a longer trace.
+
+% Finally, to distinguish effects that can be explained by page-structure caching from effects that can be explained only by the TLB, the writes must be placed on the same page-walk path. A cached intermediate entry is useful only when a later walk reuses the corresponding prefix, so this is already covered by the shared-prefix virtual addresses from \Cref{sec:reduction:vaddr}. Thus, for each undecomposable test case, it is sufficient to generate traces containing the observing core's own actions and at most two relevant PTE writes from other cores.
