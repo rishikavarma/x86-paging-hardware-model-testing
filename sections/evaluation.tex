@@ -25,7 +25,7 @@ P0: W(x)=1 & P1: W(y)=1 \\
 \]
 with \(x=y=0\) initially.  The outcome in which both reads see the initial value
 is allowed by x86-TSO but forbidden under sequential consistency. 
-% In the reduced paging model this fits within two cores, one pending PTE write per core, and reads that occur before the corresponding writebacks.  The buffered stores
+Based on our reduction arguments, this test is directly related to the ordering based tests that we intend to generate and we see that our assertion regarding number of cores and virtual and physical addresses, and trace length is sufficient to generate this test. We intend to analyse more relevant litmus tests to further validate our reduction arguments.
 
 
 \subsection{Trace Analysis}
