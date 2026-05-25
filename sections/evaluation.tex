@@ -45,21 +45,34 @@ As discussed in \Cref{sec:analysis}, trace analysis becomes computationally expe
 \paragraph{Case 1 (satisfiable).}
 The input observable trace contains only the read on the first virtual address:
 \begin{verbatim}
-memop_read core=0, vaddr=0x00000000, observed=42
+memop_read core=0,
+           vaddr=0x00000000,
+           observed=42
 \end{verbatim}
 
 The synthesizer fills in the missing internal step and returns the full trace:
 \begin{verbatim}
-tlb_fill core=0, walk={ id=0, virt=0x00000000, stage=complete,
-                        pte0=(0xfff00000 -> 0xfff01000, valid),
-                        pte1=(0xfff01000 -> 0xfff10000, valid) }
-memop_read  core=0, vaddr=0x00000000, observed=42
+tlb_fill   core=0,
+           walk={
+             id=0,
+             virt=0x00000000,
+             stage=complete,
+             pte0=(0xfff00000
+                   -> 0xfff01000, valid),
+             pte1=(0xfff01000
+                   -> 0xfff10000, valid)
+           }
+memop_read core=0,
+           vaddr=0x00000000,
+           observed=42
 \end{verbatim}
 
 \paragraph{Case 2 (unsatisfiable).}
-Using the same initial state, the input observabletrace instead requires a read on the sibling virtual address with the same observed value:
+Using the same initial state, the input observable trace instead requires a read on the second virtual address with the same observed value:
 \begin{verbatim}
-memop_read core=0, vaddr=0x00008000, observed=42
+memop_read core=0,
+           vaddr=0x00008000,
+           observed=42
 \end{verbatim}
 
 The synthesizer reports no solution: no pre-loaded walk covers \texttt{0x00008000}, the leaf page-table entry for that address is invalid, and the reachable data page for it holds 99 rather than 42. No trace in the grammar can therefore satisfy the query.
