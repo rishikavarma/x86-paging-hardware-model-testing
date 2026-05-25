@@ -8,6 +8,15 @@
 \renewcommand\footnotetextcopyrightpermission[1]{}
 \pagestyle{plain}
 
+% PLOS 2026 venue info (replaces the default acmart "Conference'17" placeholder).
+\acmConference[PLOS '26]{%
+  14th Workshop on Programming Languages and Operating Systems}{%
+  September 29, 2026}{Prague, Czechia}
+\acmYear{2026}
+\acmSubmissionID{10}
+\setcopyright{none}
+\copyrightyear{2026}
+
 \usepackage{cleveref}
 
 \begin{document}
@@ -40,6 +49,7 @@
 \input{sections/introduction}
 \input{sections/motivation}
 \input{sections/background}
+\input{sections/design}
 \input{sections/model}
 \input{sections/reduction}
 \input{sections/testgen}

@@ -2,6 +2,11 @@
 \section{Proposed Model}\label{sec:model}
 %% ============================================================
 
-% TODO: Present the formal model of the x86 MMU that is the subject of
-% validation. Describe states, transitions, and the distinction between
-% external and internal actions.
+The paging hardware is modeled as a state-transition system. The essence of the model is detailed below:
+
+\begin{itemize}
+    \item Writes to the page table are buffered in a store buffer and overall execution follows Total Store Ordering (TSO).
+    \item Translation is performed via page walks which are non-atomic and in the form of defined walk steps.
+    \item Translations are cached in a per-core Translation lookaside buffer (TLB) which is indexed by the virtual address. This may not be coherent with the page table in memory.
+    \item Partial page walks may be cached within each core and reused as a prefix in a subsequent walk.
+\end{itemize}
