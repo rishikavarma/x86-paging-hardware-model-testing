@@ -30,5 +30,39 @@ Based on our reduction arguments, this test is directly related to the ordering 
 
 \subsection{Trace Analysis}
 
-As discussed in \Cref{sec:analysis}, trace analysis becomes computationally expensive unless encoded efficiently. We show a brief example of internal trace synthesis in two cases, one where the model allows a trace and one where it does not as a proof of concept. This can be extended to larger traces and more complex models as well and we leave this for future work.
+As discussed in \Cref{sec:analysis}, trace analysis becomes computationally expensive unless encoded efficiently. As a proof of concept, we analyse the observable trace of a single core against the model on two cases (one allowed by the model and one not) with the same minimal initial state:
+
+\begin{itemize}
+    \item There are two virtual addresses, which share an upper-level page-directory entry but diverge at the leaf.
+    \item The physical address space is minimized as per \Cref{sec:reduction}, with only seven addresses in total: 2 page-directory slots, 3 page-table-page slots, and 2 data pages.
+    \item Two-level paging is employed throughout the experiment.
+    \item The page-directory slot points at one page-table page and only the first virtual address has a valid leaf entry mapping to a data page holding the value 42.
+    \item The completed page walk for the first address is pre-loaded in the core's walk list based on the simplifying assumption that the walk was completed before the test.
+    \item The sibling virtual address has no valid leaf entry, no pre-loaded walk, and its corresponding data page contains the value 99.
+    \item The TLB is empty at the start.
+\end{itemize}
+
+\paragraph{Case 1 (satisfiable).}
+The input observable trace contains only the read on the first virtual address:
+\begin{verbatim}
+memop_read core=0, vaddr=0x00000000, observed=42
+\end{verbatim}
+
+The synthesizer fills in the missing internal step and returns the full trace:
+\begin{verbatim}
+tlb_fill core=0, walk={ id=0, virt=0x00000000, stage=complete,
+                        pte0=(0xfff00000 -> 0xfff01000, valid),
+                        pte1=(0xfff01000 -> 0xfff10000, valid) }
+memop_read  core=0, vaddr=0x00000000, observed=42
+\end{verbatim}
+
+\paragraph{Case 2 (unsatisfiable).}
+Using the same initial state, the input observabletrace instead requires a read on the sibling virtual address with the same observed value:
+\begin{verbatim}
+memop_read core=0, vaddr=0x00008000, observed=42
+\end{verbatim}
+
+The synthesizer reports no solution: no pre-loaded walk covers \texttt{0x00008000}, the leaf page-table entry for that address is invalid, and the reachable data page for it holds 99 rather than 42. No trace in the grammar can therefore satisfy the query.
+
+This confirms that the encoding is able to discriminate between feasible and infeasible observable traces. Efficiently scaling to longer traces, additional cores, and incorporating more complex microarchitectural events is a work in progress and left for future work.
 
