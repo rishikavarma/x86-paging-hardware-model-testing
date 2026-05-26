@@ -34,38 +34,58 @@ observable, however if this cached page walk is used later to complete
 the page walk and read data memory, then depending on if the current 
 page writes do not match the observed read, the caching can be inferred.
 
-To be able to assert that our model is correct, there are 3 aspects to 
-consider: 1) we need exhaustive test cases that invoke all possible 
-behaviours in the hardware, 2) Using these test cases, we need to find 
-a way to test the hardware with as little interference from other 
-effects as possible, 3) We also need to verify that the observed 
-outcome from the tests is allowed by our proposed model.  Addressing 
-all of these would ensure that we have a robust hardware model.
+We address this through a three-part methodology: automated test-case generation based on an informal reduction of the hardware model, an isolation-preserving test execution harness, and synthesis-based trace analysis to validate the observed traces against the model whose overall structure is described in \Cref{sec:design}. We show some preliminary evaluations of the promise our approach holds in reducing the test space and in the trace analysis of the model validation, through simple examples that improve confidence in our correctness for these aspects and that can be extended to larger traces and more complex models.
 
-To assert that the model is correct, three aspects must be addressed:
-\begin{enumerate}
-	\item \textbf{Test-case generation.} Generate interesting test 
-cases (how can we get stimulus that can expose the interesting behavior 
-to validate the model)
+% To be able to assert that our model is correct, there are 3 aspects to 
+% consider: 1) we need exhaustive test cases that invoke all possible 
+% behaviours in the hardware, 2) Using these test cases, we need to find 
+% a way to test the hardware with as little interference from other 
+% effects as possible, 3) We also need to verify that the observed 
+% outcome from the tests is allowed by our proposed model.  Addressing 
+% all of these would ensure that we have a robust hardware model.
 
-	\item \textbf{Test execution harness.} Test execution harness 
-(how can we execute the test such that the desired behavior is actually 
-exposable) with how do we get the hardware into a state for the tests 
-(e.g., how to set the PWC entries accordingly)
+% To assert that the model is correct, three aspects must be addressed:
+% \begin{enumerate}
+%     \item \textbf{Test-case generation.} Generate interesting test 
+% cases (how can we get stimulus that can expose the interesting behavior 
+% to validate the model)
 
-	\item \textbf{Trace analysis.} Checking efficiently for 
-explainability. (How do we validate the observed trace against the 
-model (i.e., finding the hidden steps efficiently))
+%     \item \textbf{Test execution harness.} Test execution harness 
+% (how can we execute the test such that the desired behavior is actually 
+% exposable) with how do we get the hardware into a state for the tests 
+% (e.g., how to set the PWC entries accordingly)
 
-\end{enumerate}
-Addressing all three aspects ensures a robust hardware model.
+%     \item \textbf{Trace analysis.} Checking efficiently for 
+% explainability. (How do we validate the observed trace against the 
+% model (i.e., finding the hidden steps efficiently))
 
-\subsection{Approach}\label{sec:intro:approach}
-We discuss the approaches that we explored in addressing each of these aspects. The test cases for this model are in the form of traces of externally invocable actions that correspond to the externally visible actions in the model, eg: writing a page table entry, reading data memory, etc. Instead of the traditional approach of handcrafting various litmus tests that target interesting scenarios~\cite{owens2009x86tso,alglave2011litmus,alglave2014herding}, we sought to automate the generation of a sufficiently exhaustive set of traces which encompass all possible behaviours.
-% TODO: test cases part
-To execute the test traces to obtain corresponding results, we built a test harness using the barrelfish operating system ensuring that we execute as close to the hardware as possible. 
-Finally, we propose the idea of approaching verification of a trace against the model as a synthesis problem. The model itself dictates the constraints which are derived from the states and transitions, and the externally observed events (along with the outputs from the test execution) guides generation of potential internal state transitions that justify the observed behaviour. In the case that we do not find any such completed traces, it indicates a violation in the model and can direct improvement of the model. 
+% \end{enumerate}
+% Addressing all three aspects ensures a robust hardware model.
 
-We show some preliminary evaluations of the promise our approach holds in reducing the test space and the trace analysis of the model validation by showing simple examples of improving confidence of our correctness in these aspects which can be extended to larger traces and more complex models.
+% \subsection{Approach}\label{sec:intro:approach}
+% We discuss the approaches that we explored in addressing each of these aspects. 
+% The test cases for this model are in the form of traces of externally invocable 
+% actions that correspond to the externally visible actions in the model, eg: 
+% writing a page table entry, reading data memory, etc. Instead of the 
+% traditional approach of handcrafting various litmus tests that target 
+% interesting scenarios~\cite{owens2009x86tso,alglave2011litmus,
+% alglave2014herding}, we sought to automate the generation of a sufficiently 
+% exhaustive set of traces which encompass all possible behaviours.
+% % TODO: test cases part
+% To execute the test traces to obtain corresponding results, we built a test 
+% harness using the barrelfish operating system ensuring that we execute as close 
+% to the hardware as possible. 
+% Finally, we propose the idea of approaching verification of a trace against the 
+% model as a synthesis problem. The model itself dictates the constraints which 
+% are derived from the states and transitions, and the externally observed events 
+% (along with the outputs from the test execution) guides generation of potential 
+% internal state transitions that justify the observed behaviour. In the case 
+% that we do not find any such completed traces, it indicates a violation in the 
+% model and can direct improvement of the model. 
+
+% We show some preliminary evaluations of the promise our approach holds in 
+% reducing the test space and the trace analysis of the model validation by 
+% showing simple examples of improving confidence of our correctness in these 
+% aspects which can be extended to larger traces and more complex models.
 
 

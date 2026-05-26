@@ -1,15 +1,33 @@
 
 \section{Reduction Argument}\label{sec:reduction} %%
 
-The model is expected to be consistent across variables like number of cores,
-virtual addresses, physical addresses, etc. However, testing the model across
-every possible value of these variables is impractical. Testing the model on
-very large traces with many external and internal actions also causes state
-space explosion and quickly becomes computationally inviable. Thus, for the
-purpose of generating tests, we explore how far the testing space can be
-reduced and we propose a number of informal arguments to reduce the testing space. While these arguments are not complete proofs of sufficiency, they are working reduction arguments which try to identify small representative configurations that still seem capable of exposing the behaviours we care about. Robust proofs would be necessary before these bounds could be treated as complete or final. For the proof-of-concept model, however, these arguments give us a principled way to keep the generated tests tractable. This is similar in spirit to small world or small scope arguments, where behaviours in a large state space are often expected to have small witnesses.
 
-The aspects that we consider relevant to this model that need consideration are:
+% The model is expected to be consistent across variables like number of cores,
+% virtual addresses, physical addresses, etc. However, testing the model across
+% every possible value of these variables is impractical. Testing the model on
+% very large traces with many external and internal actions also causes state
+% space explosion and quickly becomes computationally inviable. Thus, for the
+% purpose of generating tests, we explore how far the testing space can be
+% reduced and we propose a number of informal arguments to reduce the testing 
+% space. While these arguments are not complete proofs of sufficiency, they are 
+% working reduction arguments which try to identify small representative 
+% configurations that still seem capable of exposing the behaviours we care 
+% about. Robust proofs would be necessary before these bounds could be treated as 
+% complete or final. For the proof-of-concept model, however, these arguments 
+% give us a principled way to keep the generated tests tractable. This is similar 
+% in spirit to small world or small scope arguments, where behaviours in a large 
+% state space are often expected to have small witnesses.
+
+As mentioned in \Cref{sec:design:reduction-role} reduction of the testing space is necessary and we detail our informal considerations and arguments for reducing the space in this section. While these arguments are not complete proofs of sufficiency, they are 
+working reduction arguments which try to identify small representative 
+configurations that still seem capable of exposing the behaviours we care 
+about. Robust proofs would be necessary before these bounds could be treated as 
+complete or final. For the proof-of-concept model, however, these arguments 
+give us a principled way to keep the generated tests tractable. This is similar 
+in spirit to small world or small scope arguments, where behaviours in a large 
+state space are often expected to have small witnesses.
+
+The aspects that we consider relevant to this model are:
 
 \begin{itemize}
   \item Number of cores 
