@@ -1,51 +1,40 @@
 %% ============================================================
-\section{Background}\label{sec:background}
+\section{Background: x86 Processor Architecture}\label{sec:background}
 %% ============================================================
 
 %
-% 
-%
-%
-%
+% Here, we may need to give a high-level primer on the x86 memory 
+% subsystem, store buffers, memory ordering, fences, and internal events.
 %
 
+% how memory address translation works
+\noindent\textbf{Memory Address Translation}
+The x86 MMU translates virtual addresses used by programs into physical addresses understood by the hardware at the granularity of pages: continuous, naturally aligned regions of memory 4KiB, 2MiB, or 1GiB in size.
+This address mapping is stored in the page table, a memory-resident, multi-level radix tree.
 
-\subsection{Formal Hardware Models}\label{sec:bg:formal}
-
-Our goal is to capture the behaviour of the hardware as a model consisting of states and transitions between them. Concretely, we view a hardware model as a state-transition system. Transitions are labelled by actions, which we divide into \emph{observable} actions (externally invocable or externally visible events) and \emph{internal} actions.
-
-This separation lets us talk about two related traces. An \emph{observable trace} records only externally visible events,
-\[
-o_1, o_2, \dots, o_n,
-\]
-while an \emph{internal execution} records the full sequence of model steps,
-\[
-i_1, i_2, \dots, i_m.
-\]
-We write \(\pi\) for the projection that erases internal steps and keeps only observable events, so that \(\pi(i_1 \dots i_m) = o_1 \dots o_n\). We say the model \emph{explains} an observed trace if there exists an internal execution in the model whose projection matches that trace. This yields an \emph{explainability} relation between observed behaviour and the model.
-
-% Also add a representation explanation for stimuli traces
-
-This paper focuses on \emph{model validation} rather than using the model as a trusted oracle. Informally, a hardware model is correct if every observable behaviour produced by the processor can be explained by some execution in the model. Equivalently, the model should not rule out any behaviour the hardware can actually exhibit.
+% translations can be cached
+\noindent\textbf{Translation Caching.}
+The x86 MMU has two kinds of caches that speed up address translation: 
+1) the translation lookaside buffer (TLB) stores the result of successful page table walks, and 
+2) page-walk cache (PWC) stores partial page table walks. 
+TLB hits bypass the page walk entirely, while a hit in the PWC skips some levels of the page table.
+Moreover, the page table walk itself uses the processor's data caches.
+The TLB and PWC are non-coherent. The OS must explicitly invalidate stale entries after a page table update.
 
 
-\subsection{x86 Paging and Translation Structures}\label{sec:bg:paging}
-
-Address translation on x86 is implemented via multi-level page tables and page walks. A translation may be served from a translation lookaside buffer (TLB) or may require a walk that reads paging structures from memory. Importantly for our setting, page walks are not atomic: the processor may perform multi-step walks, cache intermediate results in paging-structure caches (often described as page-structure caches), and reuse translations across time. Invalidation mechanisms (e.g., per-address invalidation and context changes) do not necessarily correspond to a simple ``flush everything'' semantics at the microarchitectural level, and translations may survive certain updates depending on the details of the implementation and the sequence of events.
-
-These effects matter because the externally visible outcome of a load from a virtual address depends not only on the current contents of paging structures, but also on which internal translation state (TLB entries, cached walk results, speculative translations) the processor chooses to reuse or refresh. This is precisely the gap that motivates hidden-step reconstruction.
-
-
-\subsection{Observability and Hidden Events}\label{sec:bg:observable}
-
-In our experiments, we can directly issue only a limited set of operations (e.g., writes to paging structures, invalidations, and reads that return architecturally visible values). Many relevant events remain latent: speculative walks, TLB fills, cache fills/evictions, translation reuse, and writebacks. As a result, we do not observe the internal execution \(i_1 \dots i_m\) directly; we only observe its projection \(\pi(i_1 \dots i_m)\).
-
-This partial observability creates a fundamental ambiguity: multiple distinct internal executions may project to the same observable trace. For paging, this can arise because an observed read could be served by a newly performed walk, a reused translation, or a translation derived from cached intermediate walk state. The goal of validation is therefore not to recover the ``true'' internal execution, but to decide whether \emph{some} internal execution consistent with the model can explain what we observed.
+% the memory model that makes things slightly more complicated
+\noindent\textbf{Store Buffer and Memory Model.}
+The processor implements a store buffer that records memory writes before they are written to the cache, thereby making them globally visible through the cache coherence protocol. 
+This lets the processor retire store instructions without waiting for the memory subsystem.
+However, writes sitting in the store buffer are not visible to other cores, while the store buffer is snooped and returns the last-written value for subsequent same-core reads.
+%
+The x86 architecture follows a \emph{Total Store Order (TSO)} memory model~\cite{owens2009x86tso, sewell2010x86tso}, meaning that the hardware guarantees that memory writes become visible in the same order as they are emitted to the store buffer.
+%
+Serializing instructions (e.g., fences) force store buffer writeback.
 
 
-\subsection{Synthesis-Based Explainability Checking}\label{sec:bg:synthesis}
-
-Given an observed trace, we cast validation as a synthesis problem: the observed events constrain the possible executions, the model constrains which transitions are legal, and a solver searches for an internal execution whose projection matches the observation. If the search succeeds, we obtain a witness execution (including hidden steps) that explains the trace under the current model. If the search fails, the trace is unexplained and constitutes evidence that the model is incomplete or incorrect. This existential ``explainability checking'' aligns naturally with the partial observability of modern processors.
-
-\paragraph{Small scope hypothesis.}
-The space of possible hardware configurations and traces is enormous, so any practical validation strategy must reduce the search space. We build on the intuition behind small-scope (and litmus-test-style) reduction arguments~\cite{owens2009x86tso,sewell2010x86tso,alglave2011litmus,alglave2014herding}: many interesting behaviours can be exposed in small executions with carefully chosen stimuli, and counterexamples often have small witnesses. This supports the reductions we apply in \Cref{sec:reduction} to make validation computationally viable without changing the class of behaviours we aim to capture.
+% talk about processor internal events
+\noindent\textbf{Processor Internal Events.}
+A processor effectively executes a sequence of events, which we can classify into externally observable and invisible internal events.
+Instruction execution is an observable event with a well-defined outcome, e.g., a memory read returns the value 42, which gets copied into a register.
+Internal events such as cache fill/eviction, store buffer writebacks, and speculative execution are not directly observable, but they might influence the outcome of an observable event. For example, the processor speculatively executes a TLB fill, resulting in a TLB hit on the next memory access. 

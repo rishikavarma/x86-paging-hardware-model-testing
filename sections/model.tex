@@ -2,6 +2,25 @@
 \section{Proposed Model}\label{sec:model}
 %% ============================================================
 
+\subsection{Formal Hardware Models}\label{sec:bg:formal}
+{\color{blue} moved here for now...}
+Our goal is to capture the behaviour of the hardware as a model consisting of states and transitions between them. Concretely, we view a hardware model as a state-transition system. Transitions are labelled by actions, which we divide into \emph{observable} actions (externally invocable or externally visible events) and \emph{internal} actions.
+
+This separation lets us talk about two related traces. An \emph{observable trace} records only externally visible events,
+\[
+o_1, o_2, \dots, o_n,
+\]
+while an \emph{internal execution} records the full sequence of model steps,
+\[
+i_1, i_2, \dots, i_m.
+\]
+We write \(\pi\) for the projection that erases internal steps and keeps only observable events, so that \(\pi(i_1 \dots i_m) = o_1 \dots o_n\). We say the model \emph{explains} an observed trace if there exists an internal execution in the model whose projection matches that trace. This yields an \emph{explainability} relation between observed behaviour and the model.
+
+% Also add a representation explanation for stimuli traces
+
+This paper focuses on \emph{model validation} rather than using the model as a trusted oracle. Informally, a hardware model is correct if every observable behaviour produced by the processor can be explained by some execution in the model. Equivalently, the model should not rule out any behaviour the hardware can actually exhibit.
+
+
 The paging hardware is modeled as a state-transition system. The essence of the model is detailed below:
 
 \begin{itemize}

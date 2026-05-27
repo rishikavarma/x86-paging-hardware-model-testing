@@ -2,6 +2,14 @@
 \section{Trace Analysis}\label{sec:analysis}
 %% ============================================================
 
+\subsection{Synthesis-Based Explainability Checking}\label{sec:bg:synthesis}
+{\color{blue} moved here for now...}
+Given an observed trace, we cast validation as a synthesis problem: the observed events constrain the possible executions, the model constrains which transitions are legal, and a solver searches for an internal execution whose projection matches the observation. If the search succeeds, we obtain a witness execution (including hidden steps) that explains the trace under the current model. If the search fails, the trace is unexplained and constitutes evidence that the model is incomplete or incorrect. This existential ``explainability checking'' aligns naturally with the partial observability of modern processors.
+
+\paragraph{Small scope hypothesis.}
+The space of possible hardware configurations and traces is enormous, so any practical validation strategy must reduce the search space. We build on the intuition behind small-scope (and litmus-test-style) reduction arguments~\cite{owens2009x86tso,sewell2010x86tso,alglave2011litmus,alglave2014herding}: many interesting behaviours can be exposed in small executions with carefully chosen stimuli, and counterexamples often have small witnesses. This supports the reductions we apply in \Cref{sec:reduction} to make validation computationally viable without changing the class of behaviours we aim to capture.
+
+
 
 % TODO: Formalise the synthesis encoding and discuss scalability.
 As outlined in \Cref{sec:design:pipeline}, we position trace analysis as a synthesis problem: given the model and an observable trace, we ask a solver to find a sequence of internal actions that, interleaved with the observed externals, is admissible by the model. A satisfying solution is a witness execution containing the internal actions that explains the observation; an unsatisfiable query indicates that no model-admissible execution explains the trace, and is evidence that the model is incorrect or incomplete. We encoded the model as a set of constraints over a single linear trace that interleaves the actions of all cores, and require that the solver's solution contains the observed external actions in the same order as they appear in the observable trace.
