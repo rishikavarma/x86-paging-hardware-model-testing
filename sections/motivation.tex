@@ -26,11 +26,11 @@ The hardware may speculatively evict and/or fill the TLB, or write back an entry
 
 There are two kinds of mismatches:
 
-\noindent\textbf{Hardware Steps outside of the modeled behavior.}
+\noindent\textbf{1) Hardware Steps outside of the modeled behavior.}
 The formal model abstracts away relevant underlying details (e.g., page table structure, store buffers, non-atomic updates, etc), and the hardware may exhibit behavior for which there exists no corresponding step in the specification.
 Consequently, verification against such an overapproximated specification results in an implementation that does not correctly handle behavior outside it.
 
-\noindent\textbf{Model Specification is too Broad.}
+\noindent\textbf{2) Model Specification is too Broad.}
 The formal model is more permissive than the real hardware. For example, it allows arbitrary reorderings of memory writes while the hardware enforces a total-store order. 
 While this covers all behavior of the underlying hardware, it also forces reasoning against a more permissible environment specification, which may make the proof effort bigger.
 
