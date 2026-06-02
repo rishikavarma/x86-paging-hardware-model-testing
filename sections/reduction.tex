@@ -1,74 +1,73 @@
 
-\section{Reduction Argument}\label{sec:reduction} %%
+\section{State Reduction}\label{sec:reduction} %%
+
+To make test generation and validation tractable, we reduce the hardware model by limiting the range of values for various aspects without loss of generality.
+Next, we present each aspect of the model along with informal arguments justifying each reduction.
+While these are not rigorous proofs, they are a principled application of a small-scope argument where behaviors in a large state space are often expected to have small witnesses.
+
+\noindent\textbf{Two cores.}
+On a multi-core system, the cores share access to memory and even use the same page table. At first, this means we cannot reduce the number of cores. 
+Fortunately, the internal transitions are core-local and not directly observable by other cores. Instead, other cores observe a sequence of memory accesses that originate either from the program's load/store instructions, or from a core's internal steps. This provides an opportunity, from a specific core's point of view, it does not matter which other core emitted the memory access. Thus we can merge the memory accesses of other cores into a single memory access sequence where the non-deterministic ordering results in a permutation of that order. Thus, we can reduce the number of cores to two.
+
+\noindent\textbf{Core Fidelity.} 
+Using the observation above, we do not need to model all cores with the full fidelity. Instead, we can reduce the second core to a sequence of memory write backs that can happen at any time in the trace.
+
+\noindent\textbf{Two Levels of Paging.}
+The x86 architecture has up to five levels of page tables that store the virtual-to-physical address translation. 
+The critical aspect here is that we can model the non-atomicity of a page table walk. Specifically,  
+1) we can model the effect of the page walk caches that skip the upper levels of the page table on the page walk, and 
+2) exposing the effect of super pages in the mapping. 
+Page walk caches may skip one level and directly jump to the leaf level containing the address of the physical page. Superpages change the entry type of an upper-level page table that now contains the physical address of the page rather than pointing to the next level. 
+We can again leverage symmetry and reduce the relevant page table levels to two. 
+
+\noindent\textbf{Three Virtual Pages (or PTEs).}
+Each virtual page maps to a specific leaf-level page table entry. Each virtual page has a distinct path the page table walker takes during address translation. The important factor here is the shared prefix. While we can consider paths that diverge at the root largely independent, paths that share a prefix are of interest as they will populate the page walk caches. Hence, the common prefix of the path might be skipped due to those caches.
+We select three virtual pages, two located on the same PT page, the other on a different PT page covering earlier pre-fix divergence.
 
 
-% The model is expected to be consistent across variables like number of cores,
-% virtual addresses, physical addresses, etc. However, testing the model across
-% every possible value of these variables is impractical. Testing the model on
-% very large traces with many external and internal actions also causes state
-% space explosion and quickly becomes computationally inviable. Thus, for the
-% purpose of generating tests, we explore how far the testing space can be
-% reduced and we propose a number of informal arguments to reduce the testing 
-% space. While these arguments are not complete proofs of sufficiency, they are 
-% working reduction arguments which try to identify small representative 
-% configurations that still seem capable of exposing the behaviours we care 
-% about. Robust proofs would be necessary before these bounds could be treated as 
-% complete or final. For the proof-of-concept model, however, these arguments 
-% give us a principled way to keep the generated tests tractable. This is similar 
-% in spirit to small world or small scope arguments, where behaviours in a large 
-% state space are often expected to have small witnesses.
+\noindent\textbf{Four Virtual Addresses.}
+The x86 MMU does not translate on the byte-level, instead it operates at page granularity. Given, we reduced the number of virtual pages to three, we should select one representative address of each page. In addition, we add one additional address on one of the pages, exposing the a TLB-cached virtua-to-physical mapping.
 
-As mentioned in \Cref{sec:design:reduction-role} reduction of the testing space is necessary and we detail our informal considerations and arguments for reducing the space in this section. While these arguments are not complete proofs of sufficiency, they are 
-working reduction arguments which try to identify small representative 
-configurations that still seem capable of exposing the behaviours we care 
-about. Robust proofs would be necessary before these bounds could be treated as 
-complete or final. For the proof-of-concept model, however, these arguments 
-give us a principled way to keep the generated tests tractable. This is similar 
-in spirit to small world or small scope arguments, where behaviours in a large 
-state space are often expected to have small witnesses.
+\noindent\textbf{Four Physical Frames.}
+These are the corresponding physical memory frames where the virtual pages map to. Here we must be able to remap an existing mapping of the virtual pages without creating an alias. Hence we need to use one more physical frame than we use virtual frames.
 
-The aspects that we consider relevant to this model are:
+% \noindent\textbf{Four Physical Words.}
+% These are the location in memory where the data is actually stored. 
 
-\begin{itemize}
-  \item Number of cores 
-  \item Number of paging levels 
-  \item Number of virtual addresses 
-  \item Number of physical addresses for data
-  \item Number of physical addresses for page-table entries 
-  \item Length of each trace
-\end{itemize}
 
-For each of these aspects, we ask what the smallest non-obviously-unsound
-bound seems to be. In other words, we try to identify the largest
-undecomposable test case for that resource: a test that cannot clearly be
-split into smaller independent tests without losing the behaviour being
-observed. The resulting bounds are therefore exploratory and are used to guide
-test generation rather than to establish a final theorem.
+% I'd say this is not a property of the model
+% \noindent\textbf{Trace Length}
+
+
+% For each of these aspects, we ask what the smallest non-obviously-unsound
+% bound seems to be. In other words, we try to identify the largest
+% undecomposable test case for that resource: a test that cannot clearly be
+% split into smaller independent tests without losing the behaviour being
+% observed. The resulting bounds are therefore exploratory and are used to guide
+% test generation rather than to establish a final theorem.
 
 % TODO: Effects we do model to be mentioned
-As a proof of concept, we only consider legal page structures (we avoid
-situations like self-referencing PTEs and address aliasing). We also do not
-take huge pages into consideration for our current testing scenarios.
 
 
 
-\subsection{Cores}\label{sec:reduction:cores}
 
-To decide the number of cores, we first consider how the number of cores affects the model. Naively, it appears that multiple cores modifying the same state causes races which creates effects we may want to model. But the reality is that there are two parts of the state: core-level state (TLB, Page Structure Cache, Store Buffers, etc) and the global state (Page table data memory). All cores share the global state and only the paging hardware is able to update the global state directly. Each core is able to update its own core-level state. Thus any synchronisation effects we want to observe directly relates to the core updating its in-core state and the hardware updating the global state based on changes in any of the cores(page table writes) or spontaneously by itself(writebacks, evictions, etc). 
-This results in only two different cases in testing: 1) How do different changes in the global state and local state affect the overall behaviour within a core, 2) Do global updates by the hardware based on local core updates follow total store order which is expected by our model. We need to have enough cores to test and observe the effects of both of these cases. 
-For the first case, it is immediately apparent that apart from the core in consideration for observing core-local effects, one other core is sufficient to induce global changes by the hardware. Thus 2 cores are sufficient to test all situations of the first case.
-In the second case we want to be able to identify cycles in read-write anti dependencies. For this case also we need only a minimum of 2 cores since we can test it based on a situation like this:
-Both cores write the same page table entry with different values, they first read the data memory corresponding to the appropriate virtual memory address of the other core’s write before writing and if both cores read the value correctly(No translation fails) then this indicates a cycle.
-This however is potentially hard to observe due to interference from other effects like caching, store buffers and so an easier way of testing this can use 4 cores such that: 2 cores each write and the other 2 cores each read. If the reading cores perceive different orders then there is a cycle.
+% \subsection{Cores}\label{sec:reduction:cores}
+
+% But the reality is that there are two parts of the state: core-level state (TLB, Page Structure Cache, Store Buffers, etc) and the global state (Page table data memory). All cores share the global state and only the paging hardware is able to update the global state directly. Each core is able to update its own core-level state. Thus any synchronisation effects we want to observe directly relates to the core updating its in-core state and the hardware updating the global state based on changes in any of the cores(page table writes) or spontaneously by itself(writebacks, evictions, etc). 
+% This results in only two different cases in testing: 1) How do different changes in the global state and local state affect the overall behaviour within a core, 2) Do global updates by the hardware based on local core updates follow total store order which is expected by our model. We need to have enough cores to test and observe the effects of both of these cases. 
+% For the first case, it is immediately apparent that apart from the core in consideration for observing core-local effects, one other core is sufficient to induce global changes by the hardware. Thus 2 cores are sufficient to test all situations of the first case.
+% In the second case we want to be able to identify cycles in read-write anti dependencies. For this case also we need only a minimum of 2 cores since we can test it based on a situation like this:
+% Both cores write the same page table entry with different values, they first read the data memory corresponding to the appropriate virtual memory address of the other core’s write before writing and if both cores read the value correctly(No translation fails) then this indicates a cycle.
+% This however is potentially hard to observe due to interference from other effects like caching, store buffers and so an easier way of testing this can use 4 cores such that: 2 cores each write and the other 2 cores each read. If the reading cores perceive different orders then there is a cycle.
 
 
-\subsection{Paging Levels}\label{sec:reduction:levels}
+% \subsection{Paging Levels}\label{sec:reduction:levels}
 
-Traditionally x86 has 4 level paging (PML4 → PDPT → PD → PT → Page). We argue that the levels can broadly be classified into equivalence classes of Root level, intermediate level and leaf level. Thus in the above x86 architecture, PML4 would be the root level, PDPT, PD would belong to the intermediate level and PT would be the leaf level. Among all the levels, the root level node is considered a separate entity since this is a single address that directs to the entire page table structure. There is no other link pointing to this root making it different from the other layers. The leaf level nodes are also considered a separate entity since these nodes have different permission bits representing the fact that they point to data memory pages. Thus, this behaviour can differ from the others and so is considered as a different entity as well. 
+% Traditionally x86 has 4 level paging (PML4 → PDPT → PD → PT → Page). We argue that the levels can broadly be classified into equivalence classes of Root level, intermediate level and leaf level. Thus in the above x86 architecture, PML4 would be the root level, PDPT, PD would belong to the intermediate level and PT would be the leaf level. Among all the levels, the root level node is considered a separate entity since this is a single address that directs to the entire page table structure. There is no other link pointing to this root making it different from the other layers. The leaf level nodes are also considered a separate entity since these nodes have different permission bits representing the fact that they point to data memory pages. Thus, this behaviour can differ from the others and so is considered as a different entity as well. 
 
-We want to be able to test the non-atomic nature of the page walk and all the different situations that this might result in. Thus, we approach the minimum number of levels we want to test with as that which is able to do so.  Having only 1 level(PML4->PT) definitely does not achieve this, since the page walk becomes atomic and does not represent non-atomic behaviours. This also does not have any intermediate level types. With 2 levels(PML4->PD->PT), we successfully allow non-atomic behaviour for pages of size 4KB. However, with pages of size 2MB, this reverts to the equivalent of 1-level(Only PML4->PD). For our modeling, we do not consider super pages for the purpose of our proof-of-concept model. Thus 2 levels (PML4->PD->PT) suffices to represent the non-atomicity for 4k pages that we aim to model. 
+% We want to be able to test the non-atomic nature of the page walk and all the different situations that this might result in. Thus, we approach the minimum number of levels we want to test with as that which is able to do so.  Having only 1 level(PML4->PT) definitely does not achieve this, since the page walk becomes atomic and does not represent non-atomic behaviours. This also does not have any intermediate level types. With 2 levels(PML4->PD->PT), we successfully allow non-atomic behaviour for pages of size 4KB. However, with pages of size 2MB, this reverts to the equivalent of 1-level(Only PML4->PD). For our modeling, we do not consider super pages for the purpose of our proof-of-concept model. Thus 2 levels (PML4->PD->PT) suffices to represent the non-atomicity for 4k pages that we aim to model. 
 
-Another way of looking at this situation is that, in a given test we use data memory reads to observe different behaviours of the hardware. The data memory that is read for a given virtual address directly depends on the path taken by the page walk and the lowest unit of difference that results in a potential different result is a link. Thus even if there are multiple links different in a walk path, it can be broken down into the effects of 2 separate consequences resulting from each link’s variation. Now all we need to ensure is that we consider all types of links between different levels in the process of our testing. This we are able to achieve with 2 levels and so that encompasses all the interesting cases.
+% Another way of looking at this situation is that, in a given test we use data memory reads to observe different behaviours of the hardware. The data memory that is read for a given virtual address directly depends on the path taken by the page walk and the lowest unit of difference that results in a potential different result is a link. Thus even if there are multiple links different in a walk path, it can be broken down into the effects of 2 separate consequences resulting from each link’s variation. Now all we need to ensure is that we consider all types of links between different levels in the process of our testing. This we are able to achieve with 2 levels and so that encompasses all the interesting cases.
 
 % Is this wrong(atomic claims): We achieve 2 level paging for 4KB pages by keeping the higher levels fixed.  
 
@@ -76,43 +75,43 @@ Another way of looking at this situation is that, in a given test we use data me
 
 
 
-\subsection{Physical PTE Addresses}\label{sec:reduction:pte}
+% \subsection{Physical PTE Addresses}\label{sec:reduction:pte}
 
-Different physical addresses may name different bytes, but for the purposes of
-our model many absolute addresses differ only by a uniform relocation of the
-page tables and therefore do not change the qualitative MMU story. What we
-cannot remove, however, is enough \emph{distinct} paging-structure locations to
-instantiate the walk patterns we care about.
+% Different physical addresses may name different bytes, but for the purposes of
+% our model many absolute addresses differ only by a uniform relocation of the
+% page tables and therefore do not change the qualitative MMU story. What we
+% cannot remove, however, is enough \emph{distinct} paging-structure locations to
+% instantiate the walk patterns we care about.
 
-A recurring scenario in our testing is to have \emph{at least two page walks}
-(two translations) whose trajectories share a common prefix through the paging
-hierarchy and then diverge. Only such pairs can exercise interactions between
-partially completed or cached walk state for the shared prefix and the
-distinct suffixes (including concurrent walks to two virtual addresses that
-agree on high-level table links). Walks whose table paths are completely disjoint
-can be argued separately (a standard decomposition / separation intuition), so
-the largest ``undecomposable'' case for paging-structure placement is driven by
-this shared-prefix requirement. For ordering related testing it is clear that one walk worth of page table entries is sufficient and so it doesn't create the largest test case.
+% A recurring scenario in our testing is to have \emph{at least two page walks}
+% (two translations) whose trajectories share a common prefix through the paging
+% hierarchy and then diverge. Only such pairs can exercise interactions between
+% partially completed or cached walk state for the shared prefix and the
+% distinct suffixes (including concurrent walks to two virtual addresses that
+% agree on high-level table links). Walks whose table paths are completely disjoint
+% can be argued separately (a standard decomposition / separation intuition), so
+% the largest ``undecomposable'' case for paging-structure placement is driven by
+% this shared-prefix requirement. For ordering related testing it is clear that one walk worth of page table entries is sufficient and so it doesn't create the largest test case.
 
-Consider the reduced two-level hierarchy from \Cref{sec:reduction:levels} (PML4
-\(\rightarrow\) PD \(\rightarrow\) PT). For two walks with a shared prefix, both
-walks read the same entries along the shared part of the hierarchy and then
-diverge at the first level where their paths differ. Concretely, we need physical
-addresses for the PML4 slot(s) and PD slot(s) that realise that shared prefix, and
-we need \emph{two} distinct leaf PT slots (two physical addresses of page-table
-entries at the leaf).
+% Consider the reduced two-level hierarchy from \Cref{sec:reduction:levels} (PML4
+% \(\rightarrow\) PD \(\rightarrow\) PT). For two walks with a shared prefix, both
+% walks read the same entries along the shared part of the hierarchy and then
+% diverge at the first level where their paths differ. Concretely, we need physical
+% addresses for the PML4 slot(s) and PD slot(s) that realise that shared prefix, and
+% we need \emph{two} distinct leaf PT slots (two physical addresses of page-table
+% entries at the leaf).
 
-We retain both of the following leaf placements in our testing space, because
-they are not interchangeable for MMU behaviour: (i) \emph{intra-page}-two leaf
-PTEs at different byte offsets within the same 4KB PT page (same page-aligned
-physical page for the leaf table); and (ii) \emph{inter-page}-two leaf PTEs whose
-page-aligned physical addresses lie on \emph{different} 4KB pages (two distinct PT
-pages, reached while still admitting a shared-prefix pair of walks, e.g.\ by
-sharing the PML4 prefix and then branching through different PD slots that point
-to different PT pages). Together, these cover shared-prefix divergence that ends
-in two slots of one leaf page and shared-prefix divergence that ends in PTEs on
-different leaf pages, which is the address budget we use for two-level paging
-rather than collapsing to only one of the two cases.
+% We retain both of the following leaf placements in our testing space, because
+% they are not interchangeable for MMU behaviour: (i) \emph{intra-page}-two leaf
+% PTEs at different byte offsets within the same 4KB PT page (same page-aligned
+% physical page for the leaf table); and (ii) \emph{inter-page}-two leaf PTEs whose
+% page-aligned physical addresses lie on \emph{different} 4KB pages (two distinct PT
+% pages, reached while still admitting a shared-prefix pair of walks, e.g.\ by
+% sharing the PML4 prefix and then branching through different PD slots that point
+% to different PT pages). Together, these cover shared-prefix divergence that ends
+% in two slots of one leaf page and shared-prefix divergence that ends in PTEs on
+% different leaf pages, which is the address budget we use for two-level paging
+% rather than collapsing to only one of the two cases.
 
 % We need 2 full walks at the very least?
 % Assume no need walking of same walk
@@ -126,35 +125,35 @@ rather than collapsing to only one of the two cases.
 
 
 % TODO: Finalise the concrete parameter values.
-\subsection{Virtual Addresses}\label{sec:reduction:vaddr}
-Virtual addresses can also be reduced because, as long as the page-walk structure
-for two virtual addresses is the same, those addresses induce the same sequence
-of paging-structure lookups and differ only in irrelevant bit patterns. This is similar to the physical address reduction argument. For the
-behaviours we target, the important distinctions are: (i) whether an address is
-page-aligned (so that the data read is unambiguous at page granularity), and
-(ii) which parts of the walk are shared with other addresses (so that cached
-intermediate results can be reused).
+% \subsection{Virtual Addresses}\label{sec:reduction:vaddr}
+% Virtual addresses can also be reduced because, as long as the page-walk structure
+% for two virtual addresses is the same, those addresses induce the same sequence
+% of paging-structure lookups and differ only in irrelevant bit patterns. This is similar to the physical address reduction argument. For the
+% behaviours we target, the important distinctions are: (i) whether an address is
+% page-aligned (so that the data read is unambiguous at page granularity), and
+% (ii) which parts of the walk are shared with other addresses (so that cached
+% intermediate results can be reused).
 
-We model ``similar'' mappings in terms of the walk graph: for each level, the
-relevant question is whether the corresponding link is mapped or unmapped, and
-when mapped, whether two addresses share the same prefix so that their walks
-share a common path through the paging structures. This motivates a small set of
-representative virtual addresses:
-(1) a primary address \(v\) whose mapping we update and whose data-memory read we
-use as the observable outcome, and
-(2) a secondary address \(v'\) that shares a prefix with \(v\) (so that the MMU
-may reuse cached intermediate walk results or a translation derived from that
-prefix). Any additional address that does \emph{not} share a prefix with \(v\)
-induces a disjoint walk; its effects can be tested in isolation and does not
-need to be included in the same largest ``undecomposable'' test.
+% We model ``similar'' mappings in terms of the walk graph: for each level, the
+% relevant question is whether the corresponding link is mapped or unmapped, and
+% when mapped, whether two addresses share the same prefix so that their walks
+% share a common path through the paging structures. This motivates a small set of
+% representative virtual addresses:
+% (1) a primary address \(v\) whose mapping we update and whose data-memory read we
+% use as the observable outcome, and
+% (2) a secondary address \(v'\) that shares a prefix with \(v\) (so that the MMU
+% may reuse cached intermediate walk results or a translation derived from that
+% prefix). Any additional address that does \emph{not} share a prefix with \(v\)
+% induces a disjoint walk; its effects can be tested in isolation and does not
+% need to be included in the same largest ``undecomposable'' test.
 
-Finally, different shared-prefix lengths do not fundamentally increase coverage:
-if the MMU can skip a portion of a walk by reusing cached intermediate results,
-then the existence of reuse is the key effect, not the exact number of levels
-skipped. Because our reduced paging structure already contains a root,
-intermediate, and leaf class (\Cref{sec:reduction:levels}), choosing one
-representative shared-prefix case suffices to expose prefix-level reuse and its
-interaction with updates and invalidations.
+% Finally, different shared-prefix lengths do not fundamentally increase coverage:
+% if the MMU can skip a portion of a walk by reusing cached intermediate results,
+% then the existence of reuse is the key effect, not the exact number of levels
+% skipped. Because our reduced paging structure already contains a root,
+% intermediate, and leaf class (\Cref{sec:reduction:levels}), choosing one
+% representative shared-prefix case suffices to expose prefix-level reuse and its
+% interaction with updates and invalidations.
 
 
 % How to reason about biggest test case?
@@ -171,30 +170,15 @@ interaction with updates and invalidations.
 % Maybe have a figure like 3 in: https://dl.acm.org/doi/epdf/10.1145/2024724.2024842
 % Use arm to manually invalidate perhaps in future?
 
-\subsection{Physical Data Memory Addresses}\label{sec:reduction:paddr}
-Similar to virtual addresses, we also reason about the number of physical addresses required for data memory by trying to find the largest test undecomposable test case which uses the maximum number of data memory physical addresses. The data memory addresses are the positions where the actual data is stored (not page table entries). These addresses are the final links stored in the page table which connect the virtual address to the physical location in memory. While in practice there is no real separation between data memory addresses and page table memory addresses, for the purpose of simplicity we consider them separately in our model and this can be changed for a more accurate and improved model. 
-It is apparent that from the data memory's perspective, we need to be able to have atleast two addresses to test scenarios such as a virtual address being initially mapped to one address and then mappings are changed to reflect the other resulting in potential stale data reads. Similarly, two addresses are also required for the test case discussed in section~\ref{sec:reduction:vaddr} where we observe the effects of diverging walks for virtual addresses that share a prefix. Testing scenarios related to total store ordering is similar to the previous assertions as well and only requires one physical address making it not the largest test. 
+% \subsection{Physical Data Memory Addresses}\label{sec:reduction:paddr}
+% Similar to virtual addresses, we also reason about the number of physical addresses required for data memory by trying to find the largest test undecomposable test case which uses the maximum number of data memory physical addresses. The data memory addresses are the positions where the actual data is stored (not page table entries). These addresses are the final links stored in the page table which connect the virtual address to the physical location in memory. While in practice there is no real separation between data memory addresses and page table memory addresses, for the purpose of simplicity we consider them separately in our model and this can be changed for a more accurate and improved model. 
+% It is apparent that from the data memory's perspective, we need to be able to have atleast two addresses to test scenarios such as a virtual address being initially mapped to one address and then mappings are changed to reflect the other resulting in potential stale data reads. Similarly, two addresses are also required for the test case discussed in section~\ref{sec:reduction:vaddr} where we observe the effects of diverging walks for virtual addresses that share a prefix. Testing scenarios related to total store ordering is similar to the previous assertions as well and only requires one physical address making it not the largest test. 
 
 % Can a walk be cached until PT?
 % Ask cursor to generate example test cases of all the things mentioned in this section and ref them accordingly. Using as few test cases as possible. Format mentioned in the paper.
 
 % What is our evaluation?
 % For the litmus test figure how do we represent initial PTE states?
-
-\subsection{Trace length}\label{sec:reduction:trace}
-We also want to be able to reason about what is the longest observable trace length we want to generate which can reasonably cover all undecomposable test cases. Similar to the core-count argument in \Cref{sec:reduction:cores}, there are two cases to consider.
-
-The first case is where we observe how different changes in the global state and local state affect the behaviour of one core. For this case, we consider the largest test from the perspective of the core whose behaviour we are trying to observe. The only actions of the other cores that can affect this core are writes that eventually change the global paging state. Thus, for this reduction, the trace length that matters is the observing core's own actions along with the page table writes in the other cores that may affect the page walk used by this core. Other reads in the other cores do not change the state relevant to this core's translation and so do not need to be counted while deciding the largest undecomposable trace. We acknowledge that the access bits of the PTEs may get updated in operations other than writes by other cores but for the purpose of our simplified proof-of-concept model, we ignore that and consider only the writes by other cores.
-
-As discussed in \Cref{sec:reduction:vaddr} and \Cref{sec:reduction:pte}, the interesting cases are those where page walks share some part of the paging structure and then diverge. A write to a leaf PTE on a completely disjoint path from the observing core's walk is therefore non-interfering for this test and can be considered separately. The cases that do need to be considered together are writes to the same leaf PTE, writes to an intermediate PTE and a leaf PTE on the same path, or writes to an intermediate PTE that is shared by the virtual addresses considered in \Cref{sec:reduction:vaddr}. These are the situations where the page walk can observe some combination of old and new paging structure state, or where a cached prefix of the walk can affect the final translation observed.
-
-We assume that initial state of the experiment is set such that certain general PTE entries are present corresponding to the virtual addresses that are being tested which can then be modified during the test (update or invalidate), and the data memory has unique values that have already been initially written. We claim that two such PTE writes are sufficient to represent the largest undecomposable trace with respect to writes by other cores. If there are two writes on the relevant path, then a read by the observing core may correspond to any of three states: the initial state, the state after the first write, or the state after the second write. This covers the important cases of seeing stale state, seeing an intermediate state, or seeing the final state. Adding a third write does not introduce a qualitatively new observation, since any observed result can be reduced to the pair of writes that surround the state being observed. This is true whether the writes are both at the leaf level, both at an intermediate level, or split between an intermediate level and a leaf level. If the additional write is on a disjoint path then it can be decomposed away, and if it is on the same path then it only adds another instance of the same before/after relation already represented by two writes. These writes could be either writes by the observing core or by other cores.
-
-Now to be able to observe the effects of the writes, we need to be able to observe the different states of the data memory. We can do this by having the observing core read the data memory before and after the writes are performed. This will allow us to observe the different states of the data memory and the different states of the paging structure. Since each write can affect the corresponding virtual address, at a maximum we should be able to observe the change for all virtual addresses at the initial, intermediate and final states. This gives the maximum trace length for this first case.
-
-We also need to account for tests that experiment with barriers and page invalidations. Since we consider each core's trace separately and a barrier only has impact on whether the writes of this core are globally visible, barriers can be interleaved with the writes without increasing the maximum trace length. Invalidating a page can also be treated similarly to a page-table write, since a page invalidation affects the corresponding virtual address, and so this also results in the same maximum trace length.
-
-The second case is for tests related to ordering as mentioned in \Cref{sec:reduction:cores}. Here the behaviour of interest is not just whether one observing core sees stale, intermediate, or final paging state, but whether the globally visible effects of the cores' changes respect the ordering property expected by the model. Such a test therefore expects each participating core to make a relevant page-table update and to observe the state of corresponding affected virtual addresses both before and after that change. Based on the number of cores and virtual addresses this decides the maximum length for this second case in tests.
 
 
 

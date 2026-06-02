@@ -2,13 +2,18 @@
 \section{Design}\label{sec:design}
 %% ============================================================
 
-{\color{red}\textbf{Reto is currently working here.}}
+{\color{red}\textbf{We might not have the budget to include all aspects in separate sections}}
 
 \autoref{fig:validation-pipeline} shows the overview of our model validation pipeline.
 The goal is to systematically validate the hardware model against real hardware. 
-The validation pipeline consists of a test-case generator, a test execution harness, a trace validator. 
-The input to the pipeline is a reduced hardware model that provides the basis for generating the test programs and trace validation.
-Next, we elaborate on the purpose of each component in the validation pipeline.
+The validation pipeline consists of a test-case generator, a test execution harness, and a trace validator. 
+The input to the pipeline is a reduced hardware model that serves as the basis for generating test programs and validating traces.
+
+\noindent\textbf{Problem Definition.}
+Given a hardware model, complete a trace of externally visible steps (e.g., store instructions) with hardware internal steps (e.g., store buffer write backs) such that the observable behavior of the externally visible steps (e.g., memory write succeeded), matches between the model and real hardware.
+Repeat the process by systematically exploring the space of stimulus programs.
+%
+Next, we describe the purpose of each component in the validation pipeline.
 
 \begin{figure*}[t]
     \centering
@@ -17,31 +22,45 @@ Next, we elaborate on the purpose of each component in the validation pipeline.
     \caption{Overview of the validation methodology. The formal model and
     reduction argument constrain both test generation and trace analysis;
     the harness connects stimulus traces to observations on real hardware.
-    {\color{red}\textbf{maybe include something that hints at the internal steps - Changed by Rishika}}
     }
     \label{fig:validation-pipeline}
 \end{figure*}
 
-\noindent\textbf{Hardware Model} 
+\noindent\textbf{Hardware Model (\Cref{sec:model}).} 
+%
+The hardware model is the part of the system we want to validate; in our case, it is an x86 multi-core processor with its MMU.
+We model the hardware as a state machine with transitions for program steps (e.g., memory accesses, barriers, TLB invalidations) and the internal hardware events (e.g., a TLB eviction, a step in the page table walk, a store buffer writeback).
+Each transition has an effect on the state (e.g., a memory access reads or updates the value in a memory cell) and an enabling condition (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
 
-\noindent\textbf{Model Reduction}
 
-The model is expected to be consistent across variables like the number of cores, virtual addresses, physical addresses, and trace length. However, testing it across every possible value of these variables is impractical, and synthesising hidden steps for long traces causes a state-space explosion that quickly becomes computationally inviable. We therefore propose a number of informal reduction arguments that identify small representative configurations that still seem capable of exposing the behaviours we care about. These are similar in spirit to small-world or small-scope arguments, where behaviours in a large state space are often expected to have small witnesses. The concrete bounds and the per-resource arguments behind them appear in \Cref{sec:reduction}.
 
-\noindent\textbf{Test Case Generation}
+\noindent\textbf{Model Reduction (\Cref{sec:reduction})}
+%
+Without the loss of generality, we reduce the complexity of the hardware model to make the validation tracktable.
+The hardware model must accurately represent the underlying hardware platform. 
+For an x86 multi-core machine, this means all its cores, 64-bit memory, 5-level paging, etc. 
+The resulting state space is enormous.
+Fortunately, there are many symmetries we can exploit to reduce the state space. 
+For example, while multi-core machines can have several hundred cores, we might only need to consider a handful of cores to expose unique hardware behavior.
 
-The formal model (\Cref{sec:model}) together with our proposed reduction argument (\Cref{sec:reduction}) constrain a test-case generator that emits observable stimulus traces. We chose to automate generation over hand-written litmus tests approaches such as those in~\cite{owens2009x86tso,alglave2011litmus,alglave2014herding}.
+% The model is expected to be consistent across variables like the number of cores, virtual addresses, physical addresses, and trace length. However, testing it across every possible value of these variables is impractical, and synthesising hidden steps for long traces causes a state-space explosion that quickly becomes computationally inviable. We therefore propose a number of informal reduction arguments that identify small representative configurations that still seem capable of exposing the behaviours we care about. These are similar in spirit to small-world or small-scope arguments, where behaviours in a large state space are often expected to have small witnesses. The concrete bounds and the per-resource arguments behind them appear in \Cref{sec:reduction}.
 
- Generate diverse stimulus traces that expose interesting hardware behaviours while staying within bounds. We ensure this by using our reduction arguments to constrain the test case generation process. The generator emits only externally invocable actions such as data memory operations and page table writes, since these are the only events the harness can issue.
+\noindent\textbf{Test Case Generation \Cref{sec:testgen})}
+Based on the reduced hardware model, we automatically generate diverse test programs, i.e., per-core sequences of instructions that provide the trace of externally visible program steps that exposes interesting hardware behavior.
+This is similar to a fuzzer generating inputs to a program under test. 
 
-\noindent\textbf{Test Execution Harness}
+\noindent\textbf{Test Execution Harness (\Cref{sec:harness})}
+We execute the test programs on real hardware,
+producing an execution trace that includes the instruction and the observable outcome, i.e., the value of the memory cell or that a fault occurred.
+The challenge here how to synchronize cores and store the result of the instruction without influencing the outcome of the future tests.
+The observed values should reflect hardware translation and caching effects rather than interference from the operating system. 
 
- These stimulus traces are then executed on real hardware via a lightweight harness, producing an observable execution trace including the values returned by data memory operations(reads and writes). 
+\noindent\textbf{Trace Validation (\Cref{sec:analysis})}
+To validate the collected execution trace, we must extend it with internal hardware steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded.
+This effectively searches for a sequence of model transitions that embeds the collected execution trace. 
+A failed search indicates a bug in the model.
+We cast this as a software synthesis problem: complete a program by inserting the necessary internal steps into the execution trace.
 
- Execute each stimulus trace on the hardware under as much isolation as practical, so that the observed read values reflect translation and caching effects in hardware rather than interference from the operating system. 
+% A successful search yields a witness execution (including hidden steps) that explains the observation and counts as a positive validation. A failed search indicates that no model-admissible execution exists for that observation, which is evidence that the model is incorrect or incomplete and can direct improvements. 
+% We chose a synthesis encoding of trace checking because the gap between observed and internal traces is exactly the kind of hidden-step reconstruction problem solvers handle well (\Cref{sec:bg:synthesis}).
 
-\noindent\textbf{Trace Validation}
-
-The observable trace is handed to a synthesis-based trace analyser that searches for a sequence of model transitions whose observable projection matches our observed trace. A successful search yields a witness execution (including hidden steps) that explains the observation and counts as a positive validation. A failed search indicates that no model-admissible execution exists for that observation, which is evidence that the model is incorrect or incomplete and can direct improvements. We chose a synthesis encoding of trace checking because the gap between observed and internal traces is exactly the kind of hidden-step reconstruction problem solvers handle well (\Cref{sec:bg:synthesis}).
-
- Decide whether an observed trace is explainable by the model. We cast this as a synthesis problem such that given the model's transition relation and the observed externals, we try to find a sequence of internal steps that ties them together.
