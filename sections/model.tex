@@ -1,31 +1,51 @@
 %% ============================================================
-\section{Proposed Model}\label{sec:model}
+\section{Hardware Model}\label{sec:model}
 %% ============================================================
 
-\subsection{Formal Hardware Models}\label{sec:bg:formal}
-{\color{blue} moved here for now...}
-Our goal is to capture the behaviour of the hardware as a model consisting of states and transitions between them. Concretely, we view a hardware model as a state-transition system. Transitions are labelled by actions, which we divide into \emph{observable} actions (externally invocable or externally visible events) and \emph{internal} actions.
+{\color{red}\textbf{maybe we just merge this into the design section}}
 
-This separation lets us talk about two related traces. An \emph{observable trace} records only externally visible events,
-\[
-o_1, o_2, \dots, o_n,
-\]
-while an \emph{internal execution} records the full sequence of model steps,
-\[
-i_1, i_2, \dots, i_m.
-\]
-We write \(\pi\) for the projection that erases internal steps and keeps only observable events, so that \(\pi(i_1 \dots i_m) = o_1 \dots o_n\). We say the model \emph{explains} an observed trace if there exists an internal execution in the model whose projection matches that trace. This yields an \emph{explainability} relation between observed behaviour and the model.
+We model a multi-core x86 system as a state machine.
+Specifically, we focus on the memory subsystem, including per-core MMU, TLB, and store buffers.
+We explicitly express TSO semantics and non-atomic page table walks.
 
-% Also add a representation explanation for stimuli traces
-
-This paper focuses on \emph{model validation} rather than using the model as a trusted oracle. Informally, a hardware model is correct if every observable behaviour produced by the processor can be explained by some execution in the model. Equivalently, the model should not rule out any behaviour the hardware can actually exhibit.
+\noindent\textbf{State.}
+We express the system state as a collection of core states and an array of bytes as memory.
+Each core state contains a representation of the TLB, page-walk caches, the store buffer, and a set of in-progress page table walks. 
 
 
-The paging hardware is modeled as a state-transition system. The essence of the model is detailed below:
+\noindent\textbf{Transitions}
+%
+Transitions correspond to steps the hardware is taking. 
+We divide the transitions into two groups: 
+1) \emph{observable} transitions that correspond to the instructions of a program (e.g., memory accesses, barriers, TLB invalidations),
+2) \emph{internal} transitions represent possible internal steps of the hardware (e.g., TLB fills/evictions, store buffer writebacks, page table walks).
 
-\begin{itemize}
-    \item Writes to the page table are buffered in a store buffer and overall execution follows Total Store Ordering (TSO).
-    \item Translation is performed via page walks which are non-atomic and in the form of defined walk steps.
-    \item Translations are cached in a per-core Translation lookaside buffer (TLB) which is indexed by the virtual address. This may not be coherent with the page table in memory.
-    \item Partial page walks may be cached within each core and reused as a prefix in a subsequent walk.
-\end{itemize}
+
+
+
+
+
+% \subsection{Formal Hardware Models}\label{sec:bg:formal}
+% {\color{blue} moved here for now...}
+% Our goal is to capture the behaviour of the hardware as a model consisting of states and transitions between them. Concretely, we view a hardware model as a state-transition system. 
+
+% This separation lets us talk about two related traces. An \emph{observable trace} records only externally visible events,
+% \[
+% o_1, o_2, \dots, o_n,
+% \]
+% while an \emph{internal execution} records the full sequence of model steps,
+% \[
+% i_1, i_2, \dots, i_m.
+% \]
+% We write \(\pi\) for the projection that erases internal steps and keeps only observable events, so that \(\pi(i_1 \dots i_m) = o_1 \dots o_n\). We say the model \emph{explains} an observed trace if there exists an internal execution in the model whose projection matches that trace. This yields an \emph{explainability} relation between observed behaviour and the model.
+
+
+
+% The paging hardware is modeled as a state-transition system. The essence of the model is detailed below:
+
+% \begin{itemize}
+%     \item Writes to the page table are buffered in a store buffer and overall execution follows Total Store Ordering (TSO).
+%     \item Translation is performed via page walks which are non-atomic and in the form of defined walk steps.
+%     \item Translations are cached in a per-core Translation lookaside buffer (TLB) which is indexed by the virtual address. This may not be coherent with the page table in memory.
+%     \item Partial page walks may be cached within each core and reused as a prefix in a subsequent walk.
+% \end{itemize}
