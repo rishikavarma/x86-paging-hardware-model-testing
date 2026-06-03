@@ -12,26 +12,34 @@ We evaluate our approach using a quantitative evaluation showing that  1) we can
 While a complete validation pipeline performs all the steps outlined in \Cref{fig:validation-pipeline} automatically, our current prototype requires manual intervention.
 
 \subsection{Test Case Generation}
-{\color{red}\textbf{@Rishika} maybe we can add some evaluation on test case generation ?}
-{\color{gray}\lipsum[1][1-16]} % place holder
 
-% \subsection{Reduction sanity check using litmus tests}
-% \label{sec:eval:litmus-reduction}
+We evaluate whether using the reduced mode to generate test cases yields useful programs that expose the desired hardware behavior.
 
-% One prelimnary way of analysing whether our reduction arguments are sound is to compare existing litmus tests~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding} to see if standard tests are generatable in our model despite the reduction. While this still does not guarantee correctness, this gives further confidence on the validity of our reduction arguments and can also be used to guide improvements. We use the store buffering litmus test as an example to emphasize this expectation. This can be extended to other litmus tests as well.
+\noindent\textbf{Methodology.}
+%
+We run our graph-based test case generator to obtain test cases that are similar to existing, hand-crafted Litmus tests designed for exposing specific behavior of the memory subsystem~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding}, specifically those involving the store buffer, as our model includes this aspect as well.
+The classic store-buffer test~\cite{diySBlitmus} has two threads, each writing one location and then reading the other.
+The outcome in which both reads see the initial value is allowed by x86-TSO but forbidden under sequential consistency. 
+
+\noindent\textbf{Results.}
+The generator selects two virtual memory addresses and generates a store and a load for each thread.
+The test generator emits, among others, the following program that is identical to the classic store-buffer test~\cite{diySBlitmus}. 
+\[
+\begin{array}{c@{\qquad}c}
+P0: Write(\texttt{VA1})=1 & P1: Write(\texttt{VA2})=1 \\
+\phantom{P0: }Read(\texttt{VA2})=0 & \phantom{P1: }Read(\texttt{VA1})=0
+\end{array}
+\]
+
+
+\noindent\textbf{Discussion.} 
+While this is a simple example, it shows that our prototype is capable of generating programs similar to existing Litmus tests
+
 
 % \paragraph{Store buffering.}
-% The classic store-buffering test~\cite{diySBlitmus} has two threads, each writing one location and
-% then reading the other:
-% \[
-% \begin{array}{c@{\qquad}c}
-% P0: W(x)=1 & P1: W(y)=1 \\
-% \phantom{P0: }R(y)=0 & \phantom{P1: }R(x)=0
-% \end{array}
-% \]
-% with \(x=y=0\) initially.  The outcome in which both reads see the initial value
-% is allowed by x86-TSO but forbidden under sequential consistency. 
-% Based on our reduction arguments, this test is directly related to the ordering based tests that we intend to generate and we see that our assertion regarding number of cores and virtual and physical addresses, and trace length is sufficient to generate this test. We intend to analyse more relevant litmus tests to further validate our reduction arguments.
+
+
+% with \(x=y=0\) initially.  
 
 
 \subsection{Trace Synthesis}
@@ -56,12 +64,11 @@ We then use the two observable program traces shown in \autoref{lst:eval:traces}
     % \item The TLB is empty at the start.
 % \end{itemize}
 
-\begin{lstfloat}[b]
+\begin{lstfloat}[t]
 \begin{footnotesize}
 \begin{lstlisting}
 // Case 1: Successful memory read
 memop_read core=0, vaddr=0x00000000, observed=42
-
 // Case 2: Memory read that should not succeed
 memop_read core=0, vaddr=0x00000000, observed=42
 \end{lstlisting}
@@ -72,11 +79,11 @@ memop_read core=0, vaddr=0x00000000, observed=42
 
 
 \noindent\textbf{Results.}
+%
+For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. The memory access can now read the memory cell and obtain the value 42, which matches the observed value from the trace.
+In contrast, in the second case, which reads from a non-present page, there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page table, this could never have led to a successful memory access. 
 
-Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. The memory access can now read the memory cell and obtains the value 42, which matches the observed value from the trace.
-In contrast, the second case reads from a non-present page, hence there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page tables, there is no way this could have led to a successful memory access. 
-
-\begin{lstfloat}[b]
+\begin{lstfloat}[t]
 \begin{footnotesize}
 \begin{lstlisting}
 // internal step, filling the TLB.
@@ -93,7 +100,7 @@ memop_read core=0, vaddr=0x00000000, observed=42
 \end{lstfloat}
 
 \noindent\textbf{Discussion.}
-Despite this being a small example, it demonstrates a proof-of-concept showing the feasibility of the approach. The synthesizer was able to successfully find the missing internal steps.
+Despite this being a small example, it demonstrates a proof of concept of the approach's feasibility. The synthesizer successfully identified the missing internal steps.
 
 
 
