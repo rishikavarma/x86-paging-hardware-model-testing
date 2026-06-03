@@ -10,14 +10,14 @@ To reason about the isolation properties and the system integrity, one must form
 
 To unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this alone is not sufficient, as the now-stale translation might still be cached in the TLB. So we model this as a TLB and a flat mathematical map that stores the virtual-to-physical address translation, with operations to update a page-table entry, and to fill and invalidate the TLB. This model has several problems.
 
-\noindent\textbf{Problem 1: Over-Aproximation.} 
+\noindent\textbf{Problem 1: Over-Approximation.} 
 The page table is a flat mathematical map. Updates to intermediate levels in the page table structure are abstracted away. TLB fills are atomic. 
 
 \noindent\textbf{Problem 2: Missing Memory Model.}
 Updates to the page table are memory writes that are governed by the underlying memory model.
 Store buffers and data caches are omitted, and the TLB could be filled using the old page table entry.
 
-\noindent\textbf{Problem 3: Invisible Steps}
+\noindent\textbf{Problem 3: Invisible Steps.}
 The hardware may speculatively evict and/or fill the TLB, or write back an entry to the store buffer, at any time, even while updates to the page table are in progress.
 
 
@@ -25,13 +25,13 @@ The hardware may speculatively evict and/or fill the TLB, or write back an entry
 
 There are two kinds of mismatches:
 
-\noindent\textbf{1) Hardware Steps outside of the modeled behavior.}
+\noindent\textbf{1) Hardware steps outside of the modeled behavior.}
 The formal model abstracts away relevant underlying details (e.g., page table structure, store buffers, non-atomic updates, etc), and the hardware may exhibit behavior for which there exists no corresponding step in the specification.
 Consequently, verification against such an overapproximated specification results in an implementation that does not correctly handle behavior outside it.
 
-\noindent\textbf{2) Model Specification is too Broad.}
+\noindent\textbf{2) Model specification is too Broad.}
 The formal model is more permissive than the real hardware. For example, it allows arbitrary reorderings of memory writes while the hardware enforces a total-store order. 
-While this covers all behavior of the underlying hardware, it also forces reasoning against a more permissible environment specification, which may make the proof effort bigger.
+While this covers all behavior of the underlying hardware, it also forces reasoning against a more permissive environment specification, which may increase the proof effort.
 
 
 \subsection{The Environment Specification must be Tight.}

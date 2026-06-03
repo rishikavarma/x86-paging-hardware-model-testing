@@ -8,12 +8,12 @@
 % - Model violations found and model improvements made
 % - Scalability of the synthesis step
 
-We evaluate our approach using a quantitative evaluation showing that  1) we can successfully generate useful test cases for validation, and 2) the synthesis approach successfully finds the missing internal steps.
+We evaluate our approach using a quantitative evaluation showing that 1) we can successfully generate useful test cases for validation, and 2) the synthesis approach successfully finds the missing internal steps.
 While a complete validation pipeline performs all the steps outlined in \Cref{fig:validation-pipeline} automatically, our current prototype requires manual intervention.
 
 \subsection{Test Case Generation}
 
-We evaluate whether using the reduced mode to generate test cases yields useful programs that expose the desired hardware behavior.
+We evaluate whether using the reduced model to generate test cases yields useful programs that expose the desired hardware behavior.
 
 \noindent\textbf{Methodology.}
 %
@@ -79,7 +79,7 @@ memop_read core=0, vaddr=0x00000000, observed=42
 
 \noindent\textbf{Results.}
 %
-For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. The memory access can now read the memory cell and obtain the value 42, which matches the observed value from the trace.
+For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. Recall that a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. The memory access can now read the memory cell and obtain the value 42, which matches the observed value from the trace.
 In contrast, in the second case, which reads from a non-present page, there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page table, this could never have led to a successful memory access. 
 
 \begin{lstfloat}[t]
