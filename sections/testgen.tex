@@ -15,7 +15,7 @@ Given the model constraints, we can enumerate this graph.
 
 When generating a test case, we pick a node in the graph as the starting point. Then we start picking instructions for the test program. 
 We use the model to check the outcome of a memory access (i.e., whether it causes a page fault) and ensure that both cases are covered in the test case.
-Finally, we split each test case into its respective core parts and saved them as an assembly file, which is linked into the test harness.
+Finally, we split each test case into its core parts and saved them as an assembly file, which is linked into the test harness.
 
 % trace length
 \noindent\textbf{Limiting Test Case Lengths.}

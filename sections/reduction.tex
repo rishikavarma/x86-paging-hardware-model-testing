@@ -22,7 +22,7 @@ We can again leverage symmetry and reduce the relevant page table levels to two.
 
 \noindent\textbf{Three Virtual Pages (or PTEs).}
 Each virtual page maps to a specific leaf-level page table entry. Each virtual page has a distinct path the page table walker takes during address translation. The important factor here is the shared prefix. While we can consider paths that diverge at the root largely independent, paths that share a prefix are of interest as they will populate the page walk caches. Hence, the common prefix of the path might be skipped due to those caches.
-We select three virtual pages: two on the same PT page and the other on a different PT page, covering earlier pre-fix divergence.
+We select three virtual pages: two on the same PT page and one on a different PT page, covering the earlier prefix divergence.
 
 
 \noindent\textbf{Four Virtual Addresses.}
