@@ -2,6 +2,9 @@
 \section{Related Work}\label{sec:related}
 %% ============================================================
 
+\cite{Hackett:2025:Tracelink}
+\cite{Achermann:2025:Velosiraptor}
+
 The necessity for hardware model validation has been previously established in literature. Prior works~\cite{reid2016trustworthy,armstrong2019sail,reid2016isaf} have shown that the validity of the verification result depends on the accuracy of the model. Thus, it is clear that our intent in validating the hardware model is founded and necessary. Previous works like~\cite{goldweber2024ironspec} have explored this idea of debugging specifications to see if developer intent actually matches the specification, through mutation testing and other techniques. This work focuses on software specifications while we explore validating a hardware model. 
 
 Many works have focused on the validation of hardware models. There is variety in what these models are validated against. Some works focus on the validation of the hardware model against the ISA specification~\cite{reid2016trustworthy,reid2016isaf} or the hardware implementation~\cite{armstrong2019sail}. Our approach however, is different in that we validate the hardware model against real hardware test traces. This approach is somewhat similar to the work of~\cite{alglave2011litmus,alglave2014herding, owens2009x86tso,sewell2010x86tso} which use litmus tests to validate the data memory model. However, litmus tests are only capable of directly verifying visible effects. We attempt to address the challenges that occur from validating the hardware model with tests traces that often include unobserved internal steps. We discuss our ideas in the context of the paging structure which frequently includes such unobservable internal steps. 

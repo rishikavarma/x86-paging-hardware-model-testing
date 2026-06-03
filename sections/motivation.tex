@@ -9,7 +9,7 @@ To reason about the isolation properties and the system integrity, one must form
 
 \subsection{Example: Unmapping of Memory.}
 
-To unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this, on its own, is not sufficient, as the now-stale translation might still be cached in the TLB. So we model this as a TLB and a flat mathematical map that stores the virtual-to-physical address translation, with operations to update a page-table entry, and to fill and invalidate the TLB. This model has several problems.
+To unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this alone is not sufficient, as the now-stale translation might still be cached in the TLB. So we model this as a TLB and a flat mathematical map that stores the virtual-to-physical address translation, with operations to update a page-table entry, and to fill and invalidate the TLB. This model has several problems.
 
 \noindent\textbf{Problem 1: Over-Aproximation.} 
 The page table is a flat mathematical map. Updates to intermediate levels in the page table structure are abstracted away. TLB fills are atomic. 

@@ -8,74 +8,93 @@
 % - Model violations found and model improvements made
 % - Scalability of the synthesis step
 
+We evaluate our approach using a quantitative evaluation showing that  1) we can successfully generate useful test cases for validation, and 2) the synthesis approach successfully finds the missing internal steps.
+While a complete validation pipeline performs all the steps outlined in \Cref{fig:validation-pipeline} automatically, our current prototype requires manual intervention.
 
-\subsection{Reduction sanity check using litmus tests}
-\label{sec:eval:litmus-reduction}
+\subsection{Test Case Generation}
+{\color{red}\textbf{@Rishika} maybe we can add some evaluation on test case generation ?}
+{\color{gray}\lipsum[1][1-16]} % place holder
 
-One prelimnary way of analysing whether our reduction arguments are sound is to compare existing litmus tests~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding} to see if standard tests are generatable in our model despite the reduction. While this still does not guarantee correctness, this gives further confidence on the validity of our reduction arguments and can also be used to guide improvements. We use the store buffering litmus test as an example to emphasize this expectation. This can be extended to other litmus tests as well.
+% \subsection{Reduction sanity check using litmus tests}
+% \label{sec:eval:litmus-reduction}
 
-\paragraph{Store buffering.}
-The classic store-buffering test~\cite{diySBlitmus} has two threads, each writing one location and
-then reading the other:
-\[
-\begin{array}{c@{\qquad}c}
-P0: W(x)=1 & P1: W(y)=1 \\
-\phantom{P0: }R(y)=0 & \phantom{P1: }R(x)=0
-\end{array}
-\]
-with \(x=y=0\) initially.  The outcome in which both reads see the initial value
-is allowed by x86-TSO but forbidden under sequential consistency. 
-Based on our reduction arguments, this test is directly related to the ordering based tests that we intend to generate and we see that our assertion regarding number of cores and virtual and physical addresses, and trace length is sufficient to generate this test. We intend to analyse more relevant litmus tests to further validate our reduction arguments.
+% One prelimnary way of analysing whether our reduction arguments are sound is to compare existing litmus tests~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding} to see if standard tests are generatable in our model despite the reduction. While this still does not guarantee correctness, this gives further confidence on the validity of our reduction arguments and can also be used to guide improvements. We use the store buffering litmus test as an example to emphasize this expectation. This can be extended to other litmus tests as well.
+
+% \paragraph{Store buffering.}
+% The classic store-buffering test~\cite{diySBlitmus} has two threads, each writing one location and
+% then reading the other:
+% \[
+% \begin{array}{c@{\qquad}c}
+% P0: W(x)=1 & P1: W(y)=1 \\
+% \phantom{P0: }R(y)=0 & \phantom{P1: }R(x)=0
+% \end{array}
+% \]
+% with \(x=y=0\) initially.  The outcome in which both reads see the initial value
+% is allowed by x86-TSO but forbidden under sequential consistency. 
+% Based on our reduction arguments, this test is directly related to the ordering based tests that we intend to generate and we see that our assertion regarding number of cores and virtual and physical addresses, and trace length is sufficient to generate this test. We intend to analyse more relevant litmus tests to further validate our reduction arguments.
 
 
-\subsection{Trace Analysis}
+\subsection{Trace Synthesis}
+% Purpose
+We evaluate synthesis-based trace validation using two small case studies, one of which we designed so that no satisfiable solution is permissible under the model.
 
-As discussed in \Cref{sec:analysis}, trace analysis becomes computationally expensive unless encoded efficiently. As a proof of concept, we analyse the observable trace of a single core against the model on two cases (one allowed by the model and one not) with the same minimal initial state:
+\noindent\textbf{Methodology.}
+We set the initial state as follows:
+The TLB is empty. The two-level page table has one valid page mapping, with the value 42 in the first byte. All other pages are not present. The page-walker contains an ongoing walk of the only present page in the page table. We assume this walk was started speculatively before test execution.
 
-\begin{itemize}
-    \item There are two virtual addresses, which share an upper-level page-directory entry but diverge at the leaf.
-    \item The physical address space is minimized as per \Cref{sec:reduction}, with only seven addresses in total: 2 page-directory slots, 3 page-table-page slots, and 2 data pages.
-    \item Two-level paging is employed throughout the experiment.
-    \item The page-directory slot points at one page-table page and only the first virtual address has a valid leaf entry mapping to a data page holding the value 42.
-    \item The completed page walk for the first address is pre-loaded in the core's walk list based on the simplifying assumption that the walk was completed before the test.
-    \item The sibling virtual address has no valid leaf entry, no pre-loaded walk, and its corresponding data page contains the value 99.
-    \item The TLB is empty at the start.
-\end{itemize}
+We then use the two observable program traces shown in \autoref{lst:eval:traces} as correctness constraints for the synthesizer. Case 1 accesses the page for which there is a present mapping, whereas case 2 accesses a page that is not present, but the test case reports an observed value.
 
-\paragraph{Case 1 (satisfiable).}
-The input observable trace contains only the read on the first virtual address:
-\begin{verbatim}
-memop_read core=0,
-           vaddr=0x00000000,
-           observed=42
-\end{verbatim}
+% \begin{itemize}
+    % \item The physical address space is minimized as per \Cref{sec:reduction}, with only seven addresses in total: 2 page-directory slots, 3 page-table-page slots, and 2 data pages.
+    % \item Two-level paging is employed throughout the experiment.
+    
+    % \item The page-directory slot points at one page-table page and only the first virtual address has a valid leaf entry mapping to a data page holding the value 42.
+    
+    % \item The completed page walk for the first address is pre-loaded in the core's walk list based on the simplifying assumption that the walk was completed before the test.
+    
+    % \item The sibling virtual address has no valid leaf entry, no pre-loaded walk, and its corresponding data page contains the value 99.
+    % \item The TLB is empty at the start.
+% \end{itemize}
 
-The synthesizer fills in the missing internal step and returns the full trace:
-\begin{verbatim}
-tlb_fill   core=0,
-           walk={
-             id=0,
-             virt=0x00000000,
-             stage=complete,
-             pte0=(0xfff00000
-                   -> 0xfff01000, valid),
-             pte1=(0xfff01000
-                   -> 0xfff10000, valid)
-           }
-memop_read core=0,
-           vaddr=0x00000000,
-           observed=42
-\end{verbatim}
+\begin{lstfloat}[b]
+\begin{footnotesize}
+\begin{lstlisting}
+// Case 1: Successful memory read
+memop_read core=0, vaddr=0x00000000, observed=42
 
-\paragraph{Case 2 (unsatisfiable).}
-Using the same initial state, the input observable trace instead requires a read on the second virtual address with the same observed value:
-\begin{verbatim}
-memop_read core=0,
-           vaddr=0x00008000,
-           observed=42
-\end{verbatim}
+// Case 2: Memory read that should not succeed
+memop_read core=0, vaddr=0x00000000, observed=42
+\end{lstlisting}
+\end{footnotesize}
+\caption{Observable program Traces for the satisfiable and unsatisfiable evaluation cases.}
+\label{lst:eval:traces}
+\end{lstfloat}
 
-The synthesizer reports no solution: no pre-loaded walk covers \texttt{0x00008000}, the leaf page-table entry for that address is invalid, and the reachable data page for it holds 99 rather than 42. No trace in the grammar can therefore satisfy the query.
 
-This confirms that the encoding is able to discriminate between feasible and infeasible observable traces. Efficiently scaling to longer traces, additional cores, and incorporating more complex microarchitectural events is a work in progress and left for future work.
+\noindent\textbf{Results.}
+
+Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. The memory access can now read the memory cell and obtains the value 42, which matches the observed value from the trace.
+In contrast, the second case reads from a non-present page, hence there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page tables, there is no way this could have led to a successful memory access. 
+
+\begin{lstfloat}[b]
+\begin{footnotesize}
+\begin{lstlisting}
+// internal step, filling the TLB.
+tlb_fill   core=0, walk={
+             virt=0x00000000, stage=complete,
+             pte0=(0xfff00000 -> 0xfff01000, valid),
+             pte1=(0xfff01000 -> 0xfff10000, valid)}
+// TLB now contains the entry for virt=0x00000000
+memop_read core=0, vaddr=0x00000000, observed=42
+\end{lstlisting}
+\end{footnotesize}
+\caption{Completed Program Trace for Case 1.}
+\label{lst:eval:completedtrace}
+\end{lstfloat}
+
+\noindent\textbf{Discussion.}
+Despite this being a small example, it demonstrates a proof-of-concept showing the feasibility of the approach. The synthesizer was able to successfully find the missing internal steps.
+
+
+
 

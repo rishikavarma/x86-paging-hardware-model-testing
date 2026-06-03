@@ -1,24 +1,24 @@
-%% ============================================================
-\section{Hardware Model}\label{sec:model}
-%% ============================================================
+% %% ============================================================
+% \section{Hardware Model}\label{sec:model}
+% %% ============================================================
 
-{\color{red}\textbf{maybe we just merge this into the design section}}
+% {\color{red}\textbf{maybe we just merge this into the design section}}
 
-We model a multi-core x86 system as a state machine.
-Specifically, we focus on the memory subsystem, including per-core MMU, TLB, and store buffers.
-We explicitly express TSO semantics and non-atomic page table walks.
+% We model a multi-core x86 system as a state machine.
+% Specifically, we focus on the memory subsystem, including per-core MMU, TLB, and store buffers.
+% We explicitly express TSO semantics and non-atomic page table walks.
 
-\noindent\textbf{State.}
-We express the system state as a collection of core states and an array of bytes as memory.
-Each core state contains a representation of the TLB, page-walk caches, the store buffer, and a set of in-progress page table walks. 
+% \noindent\textbf{State.}
+% We express the system state as a collection of core states and an array of bytes as memory.
+% Each core state contains a representation of the TLB, page-walk caches, the store buffer, and a set of in-progress page table walks. 
 
 
-\noindent\textbf{Transitions}
-%
-Transitions correspond to steps the hardware is taking. 
-We divide the transitions into two groups: 
-1) \emph{observable} transitions that correspond to the instructions of a program (e.g., memory accesses, barriers, TLB invalidations),
-2) \emph{internal} transitions represent possible internal steps of the hardware (e.g., TLB fills/evictions, store buffer writebacks, page table walks).
+% \noindent\textbf{Transitions}
+% %
+% Transitions correspond to steps the hardware is taking. 
+% We divide the transitions into two groups: 
+% 1) \emph{observable} transitions that correspond to the instructions of a program (e.g., memory accesses, barriers, TLB invalidations),
+% 2) \emph{internal} transitions represent possible internal steps of the hardware (e.g., TLB fills/evictions, store buffer writebacks, page table walks).
 
 
 

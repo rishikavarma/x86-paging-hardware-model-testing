@@ -6,7 +6,7 @@
 % Disable CCS, keywords, and ACM ref format (not required for submission)
 \settopmatter{printacmref=false}
 \renewcommand\footnotetextcopyrightpermission[1]{}
-\pagestyle{plain}
+% \pagestyle{plain}
 
 % PLOS 2026 venue info (replaces the default acmart "Conference'17" placeholder).
 \acmConference[PLOS '26]{%
@@ -18,6 +18,14 @@
 \copyrightyear{2026}
 
 \usepackage{cleveref}
+\usepackage{enumitem}
+\usepackage{lipsum}
+\usepackage{float}
+\usepackage{listings}
+
+\newfloat{lstfloat}{htbp}{lop}
+\floatname{lstfloat}{Listing}
+\def\lstfloatautorefname{Listing} % needed for hyperref/auroref
 
 \begin{document}
 

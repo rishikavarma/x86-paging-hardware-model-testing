@@ -6,30 +6,30 @@ Next, we present each aspect of the model along with informal arguments justifyi
 While these are not rigorous proofs, they are a principled application of a small-scope argument where behaviors in a large state space are often expected to have small witnesses.
 
 \noindent\textbf{Two cores.}
-On a multi-core system, the cores share access to memory and even use the same page table. At first, this means we cannot reduce the number of cores. 
-Fortunately, the internal transitions are core-local and not directly observable by other cores. Instead, other cores observe a sequence of memory accesses that originate either from the program's load/store instructions, or from a core's internal steps. This provides an opportunity, from a specific core's point of view, it does not matter which other core emitted the memory access. Thus we can merge the memory accesses of other cores into a single memory access sequence where the non-deterministic ordering results in a permutation of that order. Thus, we can reduce the number of cores to two.
+On a multi-core system, cores share memory and even use the same page table. At first, this means we cannot reduce the number of cores. 
+Fortunately, the internal transitions are core-local and not directly observable by other cores. Instead, other cores observe a sequence of memory accesses that originate either from the program's load/store instructions or from a core's internal steps. This provides an opportunity, from a specific core's point of view, it does not matter which other core emitted the memory access. Thus, we can merge the memory accesses of other cores into a single memory access sequence where the non-deterministic ordering results in a permutation of that order. Thus, we can reduce the number of cores to two.
 
 \noindent\textbf{Core Fidelity.} 
-Using the observation above, we do not need to model all cores with the full fidelity. Instead, we can reduce the second core to a sequence of memory write backs that can happen at any time in the trace.
+Using the observation above, we do not need to model all cores with full fidelity. Instead, we can reduce the second core to a sequence of memory write-backs that can happen at any time in the trace.
 
 \noindent\textbf{Two Levels of Paging.}
 The x86 architecture has up to five levels of page tables that store the virtual-to-physical address translation. 
 The critical aspect here is that we can model the non-atomicity of a page table walk. Specifically,  
 1) we can model the effect of the page walk caches that skip the upper levels of the page table on the page walk, and 
 2) exposing the effect of super pages in the mapping. 
-Page walk caches may skip one level and directly jump to the leaf level containing the address of the physical page. Superpages change the entry type of an upper-level page table that now contains the physical address of the page rather than pointing to the next level. 
+Page walk caches may skip one level and jump directly to the leaf level containing the physical page's address. Superpages change the entry type of an upper-level page table so that it now contains the page's physical address rather than pointing to the next level. 
 We can again leverage symmetry and reduce the relevant page table levels to two. 
 
 \noindent\textbf{Three Virtual Pages (or PTEs).}
 Each virtual page maps to a specific leaf-level page table entry. Each virtual page has a distinct path the page table walker takes during address translation. The important factor here is the shared prefix. While we can consider paths that diverge at the root largely independent, paths that share a prefix are of interest as they will populate the page walk caches. Hence, the common prefix of the path might be skipped due to those caches.
-We select three virtual pages, two located on the same PT page, the other on a different PT page covering earlier pre-fix divergence.
+We select three virtual pages: two on the same PT page and the other on a different PT page, covering earlier pre-fix divergence.
 
 
 \noindent\textbf{Four Virtual Addresses.}
-The x86 MMU does not translate on the byte-level, instead it operates at page granularity. Given, we reduced the number of virtual pages to three, we should select one representative address of each page. In addition, we add one additional address on one of the pages, exposing the a TLB-cached virtua-to-physical mapping.
+The x86 MMU does not translate at the byte level; instead, it operates at the page granularity. Given that we reduced the number of virtual pages to three, we should select one representative address of each page. In addition, we add one additional address on one of the pages, exposing a TLB-cached virtual-to-physical mapping.
 
 \noindent\textbf{Four Physical Frames.}
-These are the corresponding physical memory frames where the virtual pages map to. Here we must be able to remap an existing mapping of the virtual pages without creating an alias. Hence we need to use one more physical frame than we use virtual frames.
+These are the corresponding physical memory frames to which the virtual pages map. Here, we must be able to remap an existing mapping of the virtual pages without creating an alias. Hence, we need to use one more physical frame than we use virtual frames.
 
 % \noindent\textbf{Four Physical Words.}
 % These are the location in memory where the data is actually stored. 
