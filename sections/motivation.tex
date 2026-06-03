@@ -6,7 +6,6 @@ Verifying operating systems is particularly challenging because they directly in
 These interactions can change which memory regions are accessible and which are not. 
 To reason about the isolation properties and the system integrity, one must formally specify the semantics of the underlying hardware environment and reason about the operating system's interaction with it. 
 
-
 \subsection{Example: Unmapping of Memory.}
 
 To unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this alone is not sufficient, as the now-stale translation might still be cached in the TLB. So we model this as a TLB and a flat mathematical map that stores the virtual-to-physical address translation, with operations to update a page-table entry, and to fill and invalidate the TLB. This model has several problems.
@@ -40,7 +39,7 @@ While this covers all behavior of the underlying hardware, it also forces reason
 The environment specification must be able to express the possible hardware behavior. Otherwise, verification results are meaningless because the verified program runs in an environment it cannot handle, and thus ~\cite{goldweber2024ironspec,reid2016trustworthy}. 
 At the same time, the environment specification should not be too restrictive to make the verification effort overly complicated.
 
-\noindent\textbf{Take-Away:}
-It is paramount that we do not take hardware specifications solely on faith, but 
-validate the formal specification against real hardware implementations~\cite{reid2016trustworthy,armstrong2019sail}. 
+% \noindent\textbf{Take-Away:}
+% It is paramount that we do not take hardware specifications solely on faith, but 
+% validate the formal specification against real hardware implementations~\cite{reid2016trustworthy,armstrong2019sail}. 
 
