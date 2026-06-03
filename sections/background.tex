@@ -16,7 +16,7 @@ This address mapping is stored in the page table, a memory-resident, multi-level
 \noindent\textbf{Translation Caching.}
 The x86 MMU has two kinds of caches that speed up address translation: 
 1) the translation lookaside buffer (TLB) stores the result of successful page table walks, and 
-2) the page-walk cache (PWC) stores partial page table walks. 
+2) page-walk cache (PWC) stores partial page table walks. 
 TLB hits bypass the page walk entirely, while a hit in the PWC skips some levels of the page table.
 Moreover, the page table walk itself uses the processor's data caches.
 The TLB and PWC are non-coherent. The OS must explicitly invalidate stale entries after a page table update.

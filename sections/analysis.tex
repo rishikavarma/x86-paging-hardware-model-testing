@@ -23,7 +23,7 @@ We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set o
  \item \emph{Interpretation.} Defines the grammar semantics equivalent to the model transitions. If a step would not be permissible, the interpretation yields the failed state; otherwise, it updates the system state according to its semantics.
  \item \emph{Program Correctness.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
 \end{enumerate}
-Rosette then uses the grammar to construct candidate programs, initializes the system state, interprets the program, and uses the correctness condition to check whether the program satisfies the trace. \autoref{lst:analysis:rosette} shows an overview of our Rosette encoding for trace validation.
+Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace. \ref{lst:analysis:rosette} shows an overview of our Rosette encoding for trace validation.
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[

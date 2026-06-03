@@ -2,7 +2,7 @@
 \section{Design}\label{sec:design}
 %% ============================================================
 
-\autoref{fig:validation-pipeline} shows an overview of our model validation pipeline.
+\autoref{fig:validation-pipeline} shows the overview of our model validation pipeline.
 The goal is to systematically validate the hardware model against real hardware. 
 The validation pipeline consists of a test-case generator, a test execution harness, and a trace validator. 
 The pipeline's input is a reduced hardware model that serves as the basis for generating test programs and validating traces.
@@ -34,26 +34,26 @@ Each transition has an effect on the state (e.g., a memory access reads or updat
 
 
 
-\noindent\textbf{Model Reduction (\Cref{sec:reduction}).}
+\noindent\textbf{Model Reduction (\Cref{sec:reduction})}
 %
-Without loss of generality, we reduce the complexity of the hardware model to make validation tractable.
+Without the loss of generality, we reduce the complexity of the hardware model to make the validation tracktable.
 The hardware model must accurately represent the underlying hardware platform. 
 For an x86 multi-core machine, this means all its cores, 64-bit memory, 5-level paging, etc. 
 The resulting state space is enormous.
 Fortunately, there are many symmetries we can exploit to reduce the state space. 
 For example, while multi-core machines can have several hundred cores, we might only need to consider a handful of cores to expose unique hardware behavior.
 
-\noindent\textbf{Test Case Generation (\Cref{sec:testgen}).}
+\noindent\textbf{Test Case Generation (\Cref{sec:testgen})}
 Based on the reduced hardware model, we automatically generate diverse test programs, i.e., per-core sequences of instructions that provide the trace of externally visible program steps that expose interesting hardware behavior.
 This is similar to a fuzzer generating inputs to a program under test. 
 
-\noindent\textbf{Test Execution Harness (\Cref{sec:harness}).}
+\noindent\textbf{Test Execution Harness (\Cref{sec:harness})}
 We execute the test programs on real hardware,
 producing an execution trace that includes the instruction and the observable outcome, i.e., the value of the memory cell or that a fault occurred.
 The challenge here is how to synchronize cores and store the instruction's result without affecting the outcome of future tests.
 The observed values should reflect hardware translation and caching effects rather than interference from the operating system. 
 
-\noindent\textbf{Trace Validation (\Cref{sec:analysis}).}
+\noindent\textbf{Trace Validation (\Cref{sec:analysis})}
 To validate the collected execution trace, we must extend it with internal hardware steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded.
 This effectively searches for a sequence of model transitions that embeds the collected execution trace. 
 A failed search indicates a model bug.

@@ -7,7 +7,7 @@ While these are not rigorous proofs, they are a principled application of a smal
 
 \noindent\textbf{Two cores.}
 On a multi-core system, cores share memory and even use the same page table. At first, this means we cannot reduce the number of cores. 
-Fortunately, the internal transitions are core-local and not directly observable by other cores. Instead, other cores observe a sequence of memory accesses that originate either from the program's load/store instructions or from a core's internal steps. This provides an opportunity: from a specific core's point of view, it does not matter which other core emitted the memory access. Thus, we can merge the memory accesses of other cores into a single memory access sequence where the nondeterministic ordering results in a permutation of that order. Therefore, we can reduce the number of cores to two.
+Fortunately, the internal transitions are core-local and not directly observable by other cores. Instead, other cores observe a sequence of memory accesses that originate either from the program's load/store instructions or from a core's internal steps. This provides an opportunity, from a specific core's point of view, it does not matter which other core emitted the memory access. Thus, we can merge the memory accesses of other cores into a single memory access sequence where the non-deterministic ordering results in a permutation of that order. Thus, we can reduce the number of cores to two.
 
 \noindent\textbf{Core Fidelity.} 
 Using the observation above, we do not need to model all cores with full fidelity. Instead, we can reduce the second core to a sequence of memory write-backs that can happen at any time in the trace.
@@ -16,8 +16,8 @@ Using the observation above, we do not need to model all cores with full fidelit
 The x86 architecture has up to five levels of page tables that store the virtual-to-physical address translation. 
 The critical aspect here is that we can model the non-atomicity of a page table walk. Specifically,  
 1) we can model the effect of the page walk caches that skip the upper levels of the page table on the page walk, and 
-2) expose the effect of superpages in the mapping. 
-Page walk caches may skip one level and jump directly to the leaf level containing the physical page's address. Superpages change the entry type of an upper-level page table entry so that it now contains the page's physical address rather than pointing to the next level. 
+2) exposing the effect of super pages in the mapping. 
+Page walk caches may skip one level and jump directly to the leaf level containing the physical page's address. Superpages change the entry type of an upper-level page table so that it now contains the page's physical address rather than pointing to the next level. 
 We can again leverage symmetry and reduce the relevant page table levels to two. 
 
 \noindent\textbf{Three Virtual Pages (or PTEs).}
