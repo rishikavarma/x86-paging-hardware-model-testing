@@ -24,22 +24,14 @@ The outcome in which both reads see the initial value is allowed by x86-TSO but 
 \noindent\textbf{Results.}
 The generator selects two virtual memory addresses and generates a store and a load for each thread.
 The test generator emits, among others, the following program that is identical to the classic store-buffer test~\cite{diySBlitmus}. 
-\[
-\begin{array}{c@{\qquad}c}
-P0: Write(\texttt{VA1})=1 & P1: Write(\texttt{VA2})=1 \\
-\phantom{P0: }Read(\texttt{VA2})=0 & \phantom{P1: }Read(\texttt{VA1})=0
-\end{array}
-\]
-
+%
+\begin{verbatim}
+  P0: Write(va1) = 1  |  P1: Write(va2) = 1
+      Read(va2)  = 0  |      Read(va1)  = 0
+\end{verbatim}
 
 \noindent\textbf{Discussion.} 
 While this is a simple example, it shows that our prototype is capable of generating programs similar to existing Litmus tests
-
-
-% \paragraph{Store buffering.}
-
-
-% with \(x=y=0\) initially.  
 
 
 \subsection{Trace Synthesis}
