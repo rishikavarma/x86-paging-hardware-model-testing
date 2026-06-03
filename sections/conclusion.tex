@@ -2,8 +2,12 @@
 \section{Conclusion and Future Work}\label{sec:conclusion}
 %% ============================================================
 
-Efficiently scaling to longer traces, additional cores, and incorporating more complex microarchitectural events is a work in progress and left for future work.
+We presented a proof-of-concept validation strategy for a formal hardware model against its real-world counterpart. 
+We proposed a reduction argument to reduce the state space and a trace-validation technique based on software synthesis.
+Our evaluation shows that this can be a viable approach in validating formal hardware specifications.
+
+While our work shows promising early results, this is just one step towards a full fidelity model, 
+including more complex micro-architectural interactions. While we provided informal arguments for our model reduction approach, a formal proof would strengthen the argument.
+We leave these aspects for future work.
 
 
-% TODO: Summarise contributions and outline future work.
-In this paper, we presented a proof-of-concept model validation strategy for the x86 paging hardware. We proposed a reduction argument to reduce the testing space and a method to analyze the observed execution traces to identify if they are allowed by the model through synthesis. These ideas can be extended to a more comprehensive model including robust proofs for the reduction arguments which we leave for future work.
