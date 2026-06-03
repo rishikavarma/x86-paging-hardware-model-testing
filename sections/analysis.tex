@@ -25,14 +25,11 @@ The synthesis consists of the following three elements:
  \item \emph{Interpretation.} Defines the semantics of each grammar element equivalent to the model transitions. If a step would not be permissible, the interpretation yields the failed state; otherwise, it updates the system state according to its semantics.
  \item \emph{Program Correctness.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
 \end{enumerate}
-Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace.
+Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace. \ref{lst:analysis:rosette} shows an overview of our Rosette encoding for trace validation.
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[
   basicstyle=\ttfamily\tiny,
-  numbers=left,
-  numberstyle=\tiny,
-  numbersep=3pt,
   xleftmargin=1.4em,
   frame=single,
   framerule=0.2pt,
@@ -41,10 +38,10 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
   columns=fullflexible,
   keepspaces=true
 ]
-;; State: reduced MMU components.
+;; State: MMU components.
 (struct State (mem root pt tlb walks cache sbuf))
 
-;; Model transition relation.
+;; Model transitions that modify and return updated state.
 (define (step st op) ...) ; returns (state, valid?)
 
 ;; Grammar: candidate linear traces.
@@ -52,19 +49,15 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
   [tr (choose (Return) (Seq (op) (tr)))]
   [op (choose (OpMemOp c va r)
               (OpWritePTE c pa pte)
-              (OpWriteback c)
-              (OpInvlpg c va)
               (OpWalkNext c w)
-              (OpTLBFill c w)
-              ...)]
+              (OpTLBFill c w) ...)]
   [c   (choose 0 1 2)]
   [va  (choose VA0 VA1 ...)]
   [pa  (choose PA0 PA1 ...)]
   [pte (choose #f (cons pa valid?))]
   [w   (choose walk0 walk1 ...)])
 
-;; Interpretation: validity is the conjunction
-;; of all chosen model steps.
+;; Interpretation: validity is the conjunction of all chosen model steps.
 (define (interp tr st)
   (match tr
     [(Return) (values st #t)]
@@ -77,12 +70,12 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
 (define (check observed)
   (define tr (trace-grammar))
   (assert-required-ops tr observed)
-  (define-values (_ ok) (interp tr (make-check-state)))
-  (assert ok))
+  (define-values (_ valid) (interp tr (make-check-state)))
+  (assert valid))
 
 (synthesize #:guarantee (check observed-trace))
 \end{lstlisting}
-\caption{Simplified Rosette encoding for trace validation. The grammar synthesizes a linear sequence of model actions; the correctness condition requires the observed events to appear in that sequence and asserts that interpreting every action yields a model-admissible execution.}
+\caption{An overview of the Rosette script that encodes trace validation through internal step synthesis. The grammar synthesizes a linear sequence of model actions; the correctness condition requires the observed events to appear and asserts that interpreting every action yields a model-admissible execution.}
 \label{lst:analysis:rosette}
 \end{lstfloat}
 

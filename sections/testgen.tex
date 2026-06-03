@@ -23,8 +23,7 @@ We limit test case length by keeping track of which nodes in the graph each test
 We apply a similar strategy to the other instructions, i.e., normal memory accesses, barriers, and TLB invalidations. This avoids repeated memory accesses to the same page without requiring page table modifications, thereby bounding the length of our test programs.
 
 \noindent\textbf{Generator Implementation.}
-{\color{red}\textbf{@Rishika} maybe we can add some details on the implementation here?}
-{\color{gray}\lipsum[1][1-8]} % place holder
+We implemented the test generator using Rust with the help of an executable model also in Rust. The test generation component was achieved in 263 lines of Rust code. This includes the implementation of the graph-based test case generation, the limiting of test case lengths, inserting appropriate memory operations, page invalidations, and barriers.
 
 % Trace length
 % Maybe we can simply say start with small programs. -> BFS style?

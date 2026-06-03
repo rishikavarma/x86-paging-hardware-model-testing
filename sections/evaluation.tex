@@ -57,14 +57,21 @@ We then use the two observable program traces shown in \autoref{lst:eval:traces}
 % \end{itemize}
 
 \begin{lstfloat}[t]
-\begin{footnotesize}
-\begin{lstlisting}
+\begin{lstlisting}[
+  basicstyle=\ttfamily\tiny,
+  xleftmargin=1.4em,
+  frame=single,
+  framerule=0.2pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,
+  keepspaces=true
+]
 // Case 1: Successful memory read
 memop_read core=0, vaddr=0x00000000, observed=42
 // Case 2: Memory read that should not succeed
 memop_read core=0, vaddr=0x00000000, observed=42
 \end{lstlisting}
-\end{footnotesize}
 \caption{Observable program Traces for the satisfiable and unsatisfiable evaluation cases.}
 \label{lst:eval:traces}
 \end{lstfloat}
@@ -76,8 +83,16 @@ For the first case, the synthesizer successfully finds the missing internal step
 In contrast, in the second case, which reads from a non-present page, there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page table, this could never have led to a successful memory access. 
 
 \begin{lstfloat}[t]
-\begin{footnotesize}
-\begin{lstlisting}
+\begin{lstlisting}[
+  basicstyle=\ttfamily\tiny,
+  xleftmargin=1.4em,
+  frame=single,
+  framerule=0.2pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,
+  keepspaces=true
+]
 // internal step, filling the TLB.
 tlb_fill   core=0, walk={
              virt=0x00000000, stage=complete,
@@ -86,7 +101,6 @@ tlb_fill   core=0, walk={
 // TLB now contains the entry for virt=0x00000000
 memop_read core=0, vaddr=0x00000000, observed=42
 \end{lstlisting}
-\end{footnotesize}
 \caption{Completed Program Trace for Case 1.}
 \label{lst:eval:completedtrace}
 \end{lstfloat}
