@@ -27,6 +27,65 @@ The synthesis consists of the following three elements:
 \end{enumerate}
 Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace.
 
+\begin{lstfloat}[t]
+\begin{lstlisting}[
+  basicstyle=\ttfamily\tiny,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=3pt,
+  xleftmargin=1.4em,
+  frame=single,
+  framerule=0.2pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  columns=fullflexible,
+  keepspaces=true
+]
+;; State: reduced MMU components.
+(struct State (mem root pt tlb walks cache sbuf))
+
+;; Model transition relation.
+(define (step st op) ...) ; returns (state, valid?)
+
+;; Grammar: candidate linear traces.
+(define-grammar (trace-grammar)
+  [tr (choose (Return) (Seq (op) (tr)))]
+  [op (choose (OpMemOp c va r)
+              (OpWritePTE c pa pte)
+              (OpWriteback c)
+              (OpInvlpg c va)
+              (OpWalkNext c w)
+              (OpTLBFill c w)
+              ...)]
+  [c   (choose 0 1 2)]
+  [va  (choose VA0 VA1 ...)]
+  [pa  (choose PA0 PA1 ...)]
+  [pte (choose #f (cons pa valid?))]
+  [w   (choose walk0 walk1 ...)])
+
+;; Interpretation: validity is the conjunction
+;; of all chosen model steps.
+(define (interp tr st)
+  (match tr
+    [(Return) (values st #t)]
+    [(Seq op rest)
+     (define-values (st1 ok1) (step st op))
+     (define-values (st2 ok2) (interp rest st1))
+     (values st2 (and ok1 ok2))]))
+
+;; Correctness constraint used by synthesis.
+(define (check observed)
+  (define tr (trace-grammar))
+  (assert-required-ops tr observed)
+  (define-values (_ ok) (interp tr (make-check-state)))
+  (assert ok))
+
+(synthesize #:guarantee (check observed-trace))
+\end{lstlisting}
+\caption{Simplified Rosette encoding for trace validation. The grammar synthesizes a linear sequence of model actions; the correctness condition requires the observed events to appear in that sequence and asserts that interpreting every action yields a model-admissible execution.}
+\label{lst:analysis:rosette}
+\end{lstfloat}
+
 \noindent\textbf{Challenges.}
 Scalability is a challenge in software synthesis, as the number of choices grows exponentially with program length. While our current prototype can handle small scenarios (i.e., finding a handful of missing internal actions), scaling it to larger ones requires additional work -- and this despite the reduced model.
 Currently, we do not impose structure or ordering on the internal steps; instead, we let Rosette determine them as part of synthesis. While this does not limit possible interleavings, it also adds complexity.
