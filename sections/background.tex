@@ -10,7 +10,7 @@
 % how memory address translation works
 \noindent\textbf{Memory Address Translation}
 The x86 MMU translates virtual addresses used by programs into physical addresses understood by the hardware at the granularity of pages: continuous, naturally aligned regions of memory 4KiB, 2MiB, or 1GiB in size.
-This address mapping is stored in the page table, a memory-resident, multi-level radix tree.
+The page table, a memory-resident, multi-level radix tree, stores this address mapping.
 
 % translations can be cached
 \noindent\textbf{Translation Caching.}
@@ -25,7 +25,7 @@ The TLB and PWC are non-coherent. The OS must explicitly invalidate stale entrie
 % the memory model that makes things slightly more complicated
 \noindent\textbf{Store Buffer and Memory Model.}
 The processor implements a store buffer that records memory writes before they are written to the cache, thereby making them globally visible through the cache coherence protocol. 
-This lets the processor retire store instructions without waiting for the memory subsystem.
+The processor can retire store instructions without waiting for the memory subsystem.
 However, writes sitting in the store buffer are not visible to other cores, while the store buffer is snooped and returns the last-written value for subsequent same-core reads.
 %
 The x86 architecture follows a \emph{Total Store Order (TSO)} memory model~\cite{owens2009x86tso, sewell2010x86tso}, meaning that the hardware guarantees that memory writes become visible in the same order as they are emitted to the store buffer.
@@ -35,6 +35,6 @@ Serializing instructions (e.g., fences) force store buffer writeback.
 
 % talk about processor internal events
 \noindent\textbf{Processor Internal Events.}
-A processor effectively executes a sequence of events, which we can classify into externally observable and invisible internal events.
+A processor effectively executes a sequence of events, which we can classify into externally observable and invisible internal microarchitectural events.
 Instruction execution is an observable event with a well-defined outcome, e.g., a memory read returns the value 42, which gets copied into a register.
 Internal events such as cache fill/eviction, store buffer writebacks, and speculative execution are not directly observable, but they might influence the outcome of an observable event. For example, the processor speculatively executes a TLB fill, resulting in a TLB hit on the next memory access. 

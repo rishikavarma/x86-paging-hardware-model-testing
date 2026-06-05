@@ -3,28 +3,57 @@
 %% ============================================================
 
 A test case is a program, i.e., a set of per-core instruction sequences, that interacts with the hardware. 
-This includes writing a page table entry, reading or writing a memory address, invalidating a TLB entry, and emitting a barrier.
+The program includes writing a page table entry, reading or writing a memory address, invalidating a TLB entry, and emitting a barrier.
 %
 The instructions are parameterized. For example, a memory store takes an address and a value. 
 We use the constraints from the model reduction to select arguments for reading and writing memory addresses and page table entries.
 
-% Graph based generation
+% graph based generation
 \noindent\textbf{Graph-based Generation.}
 Instead of randomly generating programs, we leverage a graph representation of the system. Specifically, we express nodes as instances of the page table allowed by the constrained model. Edges represent writes to page table entries that update the page table. 
 Given the model constraints, we can enumerate this graph. 
 
 When generating a test case, we pick a node in the graph as the starting point. Then we start picking instructions for the test program. 
 We use the model to check the outcome of a memory access (i.e., whether it causes a page fault) and ensure that both cases are covered in the test case.
-Finally, we split each test case into its core parts and saved them as an assembly file, which is linked into the test harness.
+Finally, we split each test case into its core parts and save them as an assembly file, which is linked into the test harness.
 
 % trace length
 \noindent\textbf{Limiting Test Case Lengths.}
-We limit test case length by keeping track of which nodes in the graph each test case visits and ensuring each node is visited at most once. We generate test cases with fewer page table modifications first, and increase the number of modifications until no reachable nodes remain.
-We apply a similar strategy to the other instructions, i.e., normal memory accesses, barriers, and TLB invalidations. This avoids repeated memory accesses to the same page without requiring page table modifications, thereby bounding the length of our test programs.
+Test case length can be limited by keeping track of which nodes in the graph each test case visits and ensuring each node is visited at most once. We propose test case generation with fewer page table modifications first, and increase the number of modifications until no reachable nodes remain.
+This strategy can be applied to the other instructions, i.e., normal memory accesses, barriers, and TLB invalidations. This avoids repeated memory accesses to the same page without requiring page table modifications, thereby bounding the length of our test programs.
 
 \noindent\textbf{Generator Implementation.}
-We implemented the test generator using Rust with the help of an executable model also in Rust. The test generation component was achieved in 263 lines of Rust code. This includes the implementation of the graph-based test case generation, the limiting of test case lengths, inserting appropriate memory operations, page invalidations, and barriers.
+We implemented the test generator with Rust in 772 LoC, using an executable model of the x86 MMU. This includes implementing graph-based test case generation, inserting appropriate memory operations, page invalidations, and barriers, and per-core test sequence output. Test case length limit implementation is work in progress.
 
+%   2  imports: rand traits
+%   2  imports: File/Write/BufWriter
+%   8  imports: collections/Rc/fmt/Display
+%   1  mod util
+%  20  PhysAddr enum + macro attrs
+%  11  VALID_PHYS_ADDRS lazy initializer
+%   9  VALID_PHYS_ADDR_TO_INDEX lazy initializer
+%  18  PHYS_ADDR_OFFSETS lazy initializer
+%   9  VirtAddr enum
+%   9  VirtAddr impl
+%   5  PageTableEntry struct
+%   1  CoreId type alias
+%   7  Stimulus enum
+%  51  initialise_graph_node
+%   6  PT struct
+%   6  PhysAddrGraph struct
+%  24  PhysAddrGraph impl
+% 121  validate_write
+%  66  construct_graph
+%  20  VirtAddr_to_phys_addr_walk
+%  14  viable_reads
+% 188  generate_traces
+%   8  DirType enum
+%  11  Display impl for DirType
+%  43  get_directory_level
+%  75  write_trace
+%  37  main
+% ---
+% 772  total LOC
 % Trace length
 % Maybe we can simply say start with small programs. -> BFS style?
 

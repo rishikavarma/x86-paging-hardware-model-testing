@@ -8,11 +8,10 @@ Typically, this means specifying an abstract model of the hardware and verifying
 However, the validity of the verification result depends on the accuracy of the formalized hardware model.  
 %
 % Problem
-Unfortunately, validating the accuracy of the formalized hardware model is hard. It not only requires relating the model's specification to the observable behavior of real hardware, but also involves many invisible internal steps that influence the observable execution of a modern processor. 
+Unfortunately, validating the accuracy of the formalized hardware model is hard. It not only requires relating the model's specification to the observable behavior of real hardware, but also involves many invisible internal microarchitectural steps that influence the observable execution of a modern processor. 
 
 % Approach
-We present a methodology that lets us validate an abstract formal model against real hardware by generating test cases, executing them on real hardware to capture traces of observable behavior, and finally employing a synthesis approach to find the invisible hardware steps needed to explain the observable behavior. 
+We present a methodology that lets us validate an abstract formal model against real hardware by generating test cases, executing them on real hardware to capture traces of observable behavior, and finally employing a synthesis approach to identify the internal microarchitectural steps that explain the observable behavior. 
 To scale this approach to real-world examples, we employ a state-reduction method to limit the possible choices for test case generation and synthesis.
 % Results
-We evaluate this methodology on a model of the x86 MMU, including its observable behavior and invisible steps. 
-    
+We evaluate this methodology on a model of the x86 MMU, demonstrating that synthesis can recover internal microarchitectural steps that explain observed hardware behavior.

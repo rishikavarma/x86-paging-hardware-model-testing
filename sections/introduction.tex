@@ -4,7 +4,7 @@
 
 %
 % Context:
-%  - Verification of system softare
+%  - Verification of system software
 %  - hardware model to verify against
 % 
 System software is a high-value target for formal verification due to its critical role in enforcing isolation between processes, containers, or virtual machines.
@@ -35,7 +35,7 @@ validate the formal specification against real hardware implementations~\cite{re
 The benefit is two-fold: a mismatch can mean a bug in the specification or the hardware itself. 
 Existing validation approaches cover the ARMv8 architecture specification~\cite{Reid:2017:ValidationArmv8},
 TSO memory model~\cite{owens2009x86tso} or the Arm weak memory models~\cite{alglave2011litmus,alglave2014herding}.
-However, none of them explicitly included the invisible, processor internal steps of the virtual memory system.
+However, none of them explicitly include the invisible, internal microarchitectural steps of the virtual memory system.
 
 %
 % Approach:
@@ -44,13 +44,13 @@ However, none of them explicitly included the invisible, processor internal step
 % - 
 %
 We describe a methodology for validating hardware models against real hardware. 
-On a high-level, this includes 
+On a high level, this includes 
 1) test case generation based on an operational model,
 2) execute these test cases on real hardware, and
 3) validation of the model against a trace of observed hardware behavior.
-During validation, we need to find the \emph{missing} invisible hardware steps needed to justify the observable trace. 
+During validation, we need to identify the \emph{missing} internal microarchitectural steps that justify the observable trace. 
 We cast this into a software synthesis problem. 
-However, instead of synthesizing instructions, we synthesize the invisible, internal hardware steps and use the observable trace as the verification condition.
+However, instead of synthesizing instructions, we synthesize the invisible, internal microarchitectural steps and use the observable trace as the verification condition.
 
 Exhaustively exploring all possible hardware behaviors is prohibitively expensive.
 Hence, we must reduce the number of choices for test case generation and synthesis-based validation.
@@ -69,53 +69,10 @@ Finally, we present our choice-reduction techniques that reduce the number of co
 %
 The contributions of this paper are:
 \begin{itemize}
- \item An overall methodology to systematically validate a model against real hardware. 
- \item A trace-based validation technique using a synthesis approach.
- \item An approach to reduce the number of choices in test-case generation and validation.
-
+\item A synthesis-based validation method that reconstructs internal microarchitectural steps (\S\ref{sec:design})
+\item A reduction strategy enabling tractable validation of MMU models (\S\ref{sec:reduction})
+\item A prototype implementation evaluated on x86 paging behavior
+(\S\ref{sec:eval})
 \end{itemize}
 
  
-
-% To be able to verify the correctness of an application’s code has 
-% many aspects. While the application’s own code is an integral aspect, 
-% it is almost equally important for the application code to ensure that 
-% the process environment is used correctly. This implies that we need 
-% user process leverageable models of the process environment including 
-% the operating system part and the hardware part. While the operating 
-% system model part of the process environment can be derived from a 
-% reduction of a verified specification of the operating system code, the 
-% hardware model is not as straightforward. Documentation can help in 
-% proposing a hardware model however, these are often lacking and 
-% existing practices may be incorrect. Prior work on trustworthy processor
-% specifications argues that formal environments must be validated against
-% implementations, not taken on faith~\cite{reid2016trustworthy,armstrong2019sail}.
-% Thus, to ensure correct process environment specifications for applications to leverage, it is 
-% essential that it is based upon a tested and robust hardware model. To 
-% this end, we propose an initial exploration of the different aspects 
-% required to validate a hardware model. We discuss how we use these 
-% methods and our observations for the x86 paging hardware.
-
-% Testing the hardware model comes with challenges that are unique to 
-% this scenario: In verifying software traditionally, we are able to 
-% observe and identify every action that leads to a transition in state 
-% defined by our model. In the case of the hardware model however, there 
-% are many events that are triggered and happen within the hardware that 
-% are not directly observable. Thus, we need to test that our model 
-% encompasses observed behaviours using externally visible actions and 
-% anticipating the internal events that can explain the behaviour seen. 
-% For eg: in the case of paging, a partial page walk being cached is not 
-% observable, however if this cached page walk is used later to complete 
-% the page walk and read data memory, then depending on if the current 
-% page writes do not match the observed read, the caching can be inferred.
-
-
-% \subsection{Approach}\label{sec:intro:approach}
-% We discuss the approaches that we explored in addressing each of these aspects. The test cases for this model are in the form of traces of externally invocable actions that correspond to the externally visible actions in the model, eg: writing a page table entry, reading data memory, etc. Instead of the traditional approach of handcrafting various litmus tests that target interesting scenarios~\cite{owens2009x86tso,alglave2011litmus,alglave2014herding}, we sought to automate the generation of a sufficiently exhaustive set of traces which encompass all possible behaviours.
-% % TODO: test cases part
-% To execute the test traces to obtain corresponding results, we built a test harness using the barrelfish operating system ensuring that we execute as close to the hardware as possible. 
-% Finally, we propose the idea of approaching verification of a trace against the model as a synthesis problem. The model itself dictates the constraints which are derived from the states and transitions, and the externally observed events (along with the outputs from the test execution) guides generation of potential internal state transitions that justify the observed behaviour. In the case that we do not find any such completed traces, it indicates a violation in the model and can direct improvement of the model. 
-
-% We show some preliminary evaluations of the promise our approach holds in reducing the test space and the trace analysis of the model validation by showing simple examples of improving confidence of our correctness in these aspects which can be extended to larger traces and more complex models.
-
-

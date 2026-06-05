@@ -5,7 +5,8 @@
 To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the trace's observed behavior. 
 Recall that the model's transitions fall into observable and internal steps, where the observable steps correspond to the behavior of the execution trace. 
 We observe that we can treat the model's state transitions as possible steps a program takes.
-In our case, this lets us cast the problem of trace validation as finding the missing internal steps that complete the observed trace from the execution. In other words, applying software synthesis to repair the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching}.
+In our case, this lets us cast the problem of trace validation as finding the missing internal steps that complete the observed trace from the execution. In other words, applying software synthesis to repair the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
+or program repair~\cite{Nguyen:2013:SemFix}.
 
 
 \noindent\textbf{The Synthesis Problem.}
@@ -19,11 +20,11 @@ We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set o
 
 \begin{enumerate}[topsep=0pt, leftmargin=1.5em]
  \item \emph{System State.} One-to-one encoding of the model's state in Rosette.
- \item \emph{Grammar.} We define a grammar with a rule for each transition in the reduced model. 
- \item \emph{Interpretation.} Defines the grammar semantics equivalent to the model transitions. If a step would not be permissible, the interpretation yields the failed state; otherwise, it updates the system state according to its semantics.
+ \item \emph{Grammar.} Defines a grammar with a rule for each transition in the reduced model. 
+ \item \emph{Interpretation.} Defines the grammar semantics equivalent to the model transitions. If a step would not be permissible, the interpretation yields the non-updated state with indication of failure; otherwise, it updates the system state according to its semantics.
  \item \emph{Program Correctness.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
 \end{enumerate}
-Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace. \ref{lst:analysis:rosette} shows an overview of our Rosette encoding for trace validation.
+Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace.
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[
@@ -81,13 +82,14 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
 \end{lstfloat}
 
 \noindent\textbf{Challenges.}
-Scalability is a challenge in software synthesis, as the number of choices grows exponentially with program length. While our current prototype can handle small scenarios (i.e., finding a handful of missing internal actions), scaling it to larger ones requires additional work -- and this despite the reduced model.
+The synthesis problem grows exponentially in trace length and grammar size, motivating our reduction techniques.
+While our current prototype can handle small scenarios (i.e., finding a handful of missing internal actions), scaling it to larger ones requires additional work -- and this despite the reduced model.
 Currently, we do not impose structure or ordering on the internal steps; instead, we let Rosette determine them during synthesis. While this does not limit possible interleavings, it also adds complexity.
 We think that a multi-step approach offers a promising improvement. Specifically, we plan to:
 
 \begin{itemize}[topsep=0pt, leftmargin=1.5em]
   \item \emph{Abstract non-test cores.} Currently, we model all cores with the same fidelity. 
-  This means Rosette must implement internal steps for all cores, which increases complexity.
+  Consequently, Rosette must implement internal steps for all cores, which increases complexity.
   We plan to treat memory write-backs as relevant events and abstract away all internal steps for the other cores. 
   \item \emph{Big-Step Walks.} The model expresses page walks as multiple small steps; instead, we can introduce a complete walk as a grammar element, interleaved by possible page-table updates from other cores.
   \item \emph{Leveraging Domain Knowledge.} We observe that a memory access can only succeed if there is a corresponding TLB entry, which in turn can only be there if a page walk succeeded. We can leverage this dependency during synthesis. 
@@ -97,7 +99,7 @@ We think that a multi-step approach offers a promising improvement. Specifically
 % \begin{itemize}
 %   \item \textbf{Coarser walk structure and overlap-based reasoning.}
 %   Instead of letting the solver choose each fine-grained walk micro-step, one can introduce a single \emph{walk} macro-step that stands for an entire walk history, with internal ordering resolved only where it matters.
-%   With concurrent walks, many pairs are effectively \emph{quiescent}: walks that do not overlap a modification to the paging structures they consult can often be treated as atomic with respect to those updates, which shrinks the interleaving space.
+%   With concurrent walks, many pairs are effectively \emph{quiescent}: walks that do not overlap. A modification to the paging structures they consult can often be treated as atomic with respect to those updates, which shrinks the interleaving space.
 %   What then matters is (i) whether a walk is \emph{in flight} over a virtual-address range while paging structures for that range are being modified, and (ii) where in that window the update becomes architecturally visible relative to the walk.
 
 %   \item \textbf{Per-core abstraction and pruned action sets.}

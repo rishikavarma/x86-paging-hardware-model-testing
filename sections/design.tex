@@ -10,8 +10,7 @@ The pipeline's input is a reduced hardware model that serves as the basis for ge
 \noindent\textbf{Problem Definition.}
 Given a hardware model, generate a set of test cases that cover hardware behaviors that we intend to observe, execute the test cases, and for each test, identify whether the output is allowed by the model.
 Refine the model if there is a mismatch.
-% Given a hardware model, complete a trace of externally visible steps (e.g., store instructions) with hardware internal steps (e.g., store buffer write backs) such that the observable behavior of the externally visible steps (e.g., memory write succeeded), matches between the model and real hardware.
-% Repeat the process by systematically exploring the space of stimulus programs.
+
 Next, we describe the purpose of each component in the validation pipeline.
 
 
@@ -19,24 +18,22 @@ Next, we describe the purpose of each component in the validation pipeline.
     \centering
     \includegraphics[width=\columnwidth]{figures/SystemOverview.drawio.pdf}
     % TODO refine. 
-    \caption{Overview of the validation methodology. The formal model and
-    reduction argument constrain both test generation and trace analysis;
-    the harness connects stimulus traces to observations on real hardware.
+    \caption{Overview of the validation methodology. 
+    Bolded red steps denote synthesized internal transitions required to explain the observed trace.
     }
     \label{fig:validation-pipeline}
 \end{figure}
 
 \noindent\textbf{Hardware Model.} 
 %
-The hardware model is the part of the system we want to validate; in our case, it is an x86 multi-core processor with its MMU.
-We model the hardware as a state machine with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
-Each transition has an effect on the state (e.g., a memory access reads or updates the value in a memory cell) and an enabling condition (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
+The hardware model is the part of the system we want to validate. In our case, it is an x86 multi-core processor with its MMU modeled as a state machine with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
+Each transition affects the state (e.g., a memory access reads or updates the value in a memory cell) and an enabling condition is required (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
 
 
 
 \noindent\textbf{Model Reduction (\Cref{sec:reduction})}
 %
-Without the loss of generality, we reduce the complexity of the hardware model to make the validation tracktable.
+We reduce the model guided by small-scope hypotheses~\cite{Jackson:2002:Alloy}: many relevant behaviors are expected to have small witnesses. While not formally proven, this assumption is standard in testing and bounded model checking.
 The hardware model must accurately represent the underlying hardware platform. 
 For an x86 multi-core machine, this means all its cores, 64-bit memory, 5-level paging, etc. 
 The resulting state space is enormous.
@@ -54,8 +51,8 @@ The challenge here is how to synchronize cores and store the instruction's resul
 The observed values should reflect hardware translation and caching effects rather than interference from the operating system. 
 
 \noindent\textbf{Trace Validation (\Cref{sec:analysis})}
-To validate the collected execution trace, we must extend it with internal hardware steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded.
-This effectively searches for a sequence of model transitions that embeds the collected execution trace. 
+To validate the collected execution trace, we must extend it with internal microarchitectural steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded.
+We search for a sequence of model transitions that embeds the collected execution trace. 
 A failed search indicates a model bug.
 We cast this as a software synthesis problem: complete a program sketch by inserting the necessary internal steps.
 
