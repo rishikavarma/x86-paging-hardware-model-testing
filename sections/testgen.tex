@@ -23,7 +23,7 @@ Test case length can be limited by keeping track of which nodes in the graph eac
 This strategy can be applied to the other instructions, i.e., normal memory accesses, barriers, and TLB invalidations. This avoids repeated memory accesses to the same page without requiring page table modifications, thereby bounding the length of our test programs.
 
 \noindent\textbf{Generator Implementation.}
-We implemented the test generator with Rust in 772 LoC, using an executable model of the x86 MMU. This includes implementing graph-based test case generation, inserting appropriate memory operations, page invalidations, and barriers, and per-core test sequence output. Test case length limit implementation is work in progress.
+We implemented the test generator with Rust in 772 LoC, using an executable model of the x86 MMU. This includes graph-based test case generation, insertion of appropriate memory operations, page invalidations, and barriers, and per-core test sequence output. Limiting test case length is work in progress.
 
 %   2  imports: rand traits
 %   2  imports: File/Write/BufWriter
