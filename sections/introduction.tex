@@ -27,7 +27,7 @@ Consequently, the verification result depends directly on the accuracy of the ha
 Unfortunately, writing accurate hardware specifications is hard on its own, as documentation is often incomplete, imprecise, or even contradictory. 
 There are three main problems: 
 First, the formal specifications of the environment contain bugs~\cite{Fonseca:2017:EnvironmentBugs} that manifest in the verified implementation~\cite{goldweber2024ironspec,reid2016trustworthy}.
-Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap}, i.e., the formal model does not contain bugs, but it is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant details.
+Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap,Bognar:2022:MindTheGap}, i.e., the formal model does not contain bugs, but it is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant details.
 Third, not all the steps the hardware takes are directly visible to the software. However, they influence observable outcomes. For example, a speculative TLB fill walks the page table and inserts an entry in the TLB that might be used in a future memory access. 
 
 It is paramount that we do not take hardware specification solely on faith, but 
