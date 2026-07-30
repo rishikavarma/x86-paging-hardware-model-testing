@@ -36,7 +36,7 @@ While this covers all behavior of the underlying hardware, it also forces reason
 
 \subsection{The Environment Specification must be Tight.}
 
-The environment specification must be able to express the possible hardware behavior. Otherwise, verification results are meaningless because the verified program runs in an environment it cannot handle, and thus ~\cite{goldweber2024ironspec,reid2016trustworthy}. 
+The environment specification must be able to express the possible hardware behavior. Otherwise, verification results are meaningless because the verified program runs in an environment it cannot handle, and thus ~\cite{goldweber2024ironspec,reid2016trustworthy} \hl{subsequent behaviour may diverge from expected, safe patterns}. 
 At the same time, the environment specification should not be too restrictive to make the verification effort overly complicated.
 
 % \noindent\textbf{Take-Away:}

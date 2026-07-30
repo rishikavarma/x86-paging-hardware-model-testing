@@ -2,7 +2,7 @@
 \section{Trace Validation with Software Synthesis}\label{sec:analysis}
 %% ============================================================
 
-To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the trace's observed behavior. 
+To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the trace's observed behavior. \hl{While for short traces, this is easily achieved by manual analysis, we expect situtions with long traces with ambiguous intermediate steps or large number of traces to be analysed. Since manually analysing would be pain staking in these cases, we propose automating it using software synthesis.}
 Recall that the model's transitions fall into observable and internal steps, where the observable steps correspond to the behavior of the execution trace. 
 We observe that we can treat the model's state transitions as possible steps a program takes.
 In our case, this lets us cast the problem of trace validation as finding the missing internal steps that complete the observed trace from the execution. In other words, applying software synthesis to repair the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 

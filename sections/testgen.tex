@@ -6,7 +6,7 @@ A test case is a program, i.e., a set of per-core instruction sequences, that in
 The program includes writing a page table entry, reading or writing a memory address, invalidating a TLB entry, and emitting a barrier.
 %
 The instructions are parameterized. For example, a memory store takes an address and a value. 
-We use the constraints from the model reduction to select arguments for reading and writing memory addresses and page table entries.
+We use the constraints from the model reduction to select arguments for reading and writing memory addresses and page table entries.\hl{For example, since we limit the number of virtual addresses to three, we pick one of these values when the test calls for a memory read. We also ensure to pick the values such that there is no repetition in the same type of test patterns but with different addresses that dont expose new scenarios.}
 
 % graph based generation
 \noindent\textbf{Graph-based Generation.}

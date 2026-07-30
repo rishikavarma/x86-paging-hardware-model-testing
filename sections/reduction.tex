@@ -3,7 +3,7 @@
 
 To make test generation and validation tractable, we reduce the hardware model by limiting the range of values for various aspects
 guided by a small-scope hypothesis~\cite{Jackson:2002:Alloy}.
-Next, we present each aspect of the model along with tentative informal arguments justifying each reduction.
+Next, we present each aspect of the model along with tentative informal arguments \hl{applicable to our model justifying each reduction. While all aspects of this reduction may not be generalizable, similar relevant arguments can be made for any other hardware models.}
 While these are not rigorous proofs, they are a principled application of a small-scope argument where behaviors are expected to have small witnesses, and can be used to guide formal proving. 
 
 \noindent\textbf{Two cores.}
@@ -15,11 +15,12 @@ Using the observation above, we do not need to model all cores with full fidelit
 
 \noindent\textbf{Two Levels of Paging.}
 The x86 architecture has up to five levels of page tables that store the virtual-to-physical address translation. 
-The critical aspect here is that we can model the non-atomicity of a page table walk. Specifically,  
-1) we can model the effect of the page walk caches that skip the upper levels of the page table on the page walk, and 
-2) exposing the effect of super pages in the mapping. 
-Page walk caches may skip one level and jump directly to the leaf level containing the physical page's address. Superpages change the entry type of an upper-level page table so that it now contains the page's physical address rather than pointing to the next level. 
-We can again leverage symmetry and reduce the relevant page table levels to two. 
+The critical aspect here is that \hl{we need to} model the non-atomicity of a page table walk. Specifically,  
+we \hl{need our model to 1) capture the} effect of the page walk caches that skip the upper levels of the page table on the page walk, 
+\hl{2) include potential behaviors resulting from interleavings between page table writes and page walks}, and
+3) expose the effect of super pages in the mapping. 
+\hl{For the first case, it is sufficient for a testing environment where page walk caches skip one level and jump directly to the leaf level containing the physical page's address. Invoking interleavings also only requires atleast 2 levels to expose subsequent effects. Similarly, superpages change the entry type of an upper-level page table so that it now contains the page's physical address rather than pointing to the next level. This can also be achieved with two levels.}
+
 
 \noindent\textbf{Three Virtual Pages (or PTEs).}
 Each virtual page maps to a specific leaf-level page table entry. Each virtual page has a distinct path that the page table walker takes during address translation. The important factor here is the shared prefix. While we can consider paths that diverge at the root largely independent, paths that share a prefix are of interest as they will populate the page walk caches. Hence, the common prefix of the path might be skipped due to those caches.

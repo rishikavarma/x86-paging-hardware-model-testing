@@ -26,19 +26,20 @@ Next, we describe the purpose of each component in the validation pipeline.
 
 \noindent\textbf{Hardware Model.} 
 %
-The hardware model is the part of the system we want to validate. In our case, it is an x86 multi-core processor with its MMU modeled as a state machine with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
+The hardware model is the part of the system we want to validate. \hl{While our high-level methodology extends to most hardware models, for our discussion we specifically consider} an x86 multi-core processor with its MMU modeled as a state machine with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
 Each transition affects the state (e.g., a memory access reads or updates the value in a memory cell) and an enabling condition is required (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
-
+\hl{Our initial model was based on documentation and assumptions made by existing operating systems. This model is then iteratively tested and improved if necessary.}
 
 
 \noindent\textbf{Model Reduction (\Cref{sec:reduction})}
 %
-We reduce the model guided by small-scope hypotheses~\cite{Jackson:2002:Alloy}: many relevant behaviors are expected to have small witnesses. While not formally proven, this assumption is standard in testing and bounded model checking.
+We reduce our considered model guided by the small-scope hypotheses~\cite{Jackson:2002:Alloy}. The small scope hypothesis anticipates that most behaviors observable in a given system are expected to be seen in a smaller scope. \hl{In our context, given the hardware model, we make the reasonable assumption that a calculated bounded (on parameters like number of cores, virtual and physical memory addresses, page table levels etc)  testing environment would suffice to expose most behaviors of relevance.} While not formally proven, this assumption is standard in testing and bounded model checking \hl{and can guide induction based proofs}. 
 The hardware model must accurately represent the underlying hardware platform. 
 For an x86 multi-core machine, this means all its cores, 64-bit memory, 5-level paging, etc. 
 The resulting state space is enormous.
 Fortunately, there are many symmetries we can exploit to reduce the state space. 
 For example, while multi-core machines can have several hundred cores, we might only need to consider a handful of cores to expose unique hardware behavior.
+\hl{Many of the simplifications we make in the current stage correlate strongly to the x86 hardware but reduction arguments can be adapted appropriately to the corresponding model of interest.}
 
 \noindent\textbf{Test Case Generation (\Cref{sec:testgen})}
 Based on the reduced hardware model, we automatically generate diverse test programs, i.e., per-core sequences of instructions that provide the trace of externally visible program steps that expose interesting hardware behavior.

@@ -49,7 +49,7 @@ On a high level, this includes
 2) execute these test cases on real hardware, and
 3) validation of the model against a trace of observed hardware behavior.
 During validation, we need to identify the \emph{missing} internal microarchitectural steps that justify the observable trace. 
-We cast this into a software synthesis problem. 
+\hl{To ease analysis of large number or length of traces, we propose automating it by casting this into a software synthesis problem instead of requiring manual intervention.}
 However, instead of synthesizing instructions, we synthesize the invisible, internal microarchitectural steps and use the observable trace as the verification condition.
 
 Exhaustively exploring all possible hardware behaviors is prohibitively expensive.

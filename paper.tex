@@ -1,27 +1,73 @@
 %%% paper.tex — PLOS 2026 submission
 %%% ACM sigplan, anonymous, 10pt (per CFP)
 %%% Max 6 pages (excl. bibliography), double-blind
-\documentclass[sigplan,anonymous,10pt]{acmart}
+\documentclass[sigplan,10pt]{acmart}
 
 % Disable CCS, keywords, and ACM ref format (not required for submission)
-\settopmatter{printacmref=false}
-\renewcommand\footnotetextcopyrightpermission[1]{}
+\settopmatter{printacmref=true}
+% \renewcommand\footnotetextcopyrightpermission[1]{}
 % \pagestyle{plain}
 
 % PLOS 2026 venue info (replaces the default acmart "Conference'17" placeholder).
-\acmConference[PLOS '26]{%
-  14th Workshop on Programming Languages and Operating Systems}{%
-  September 29, 2026}{Prague, Czechia}
 \acmYear{2026}
-\acmSubmissionID{10}
-\setcopyright{none}
 \copyrightyear{2026}
+\acmConference[PLOS '26]{14th Workshop on Programming Languages and Operating Systems}{September 29, 2026}{Prague, Czechia}
+\acmBooktitle{14th Workshop on Programming Languages and Operating Systems (PLOS '26), September 29, 2026, Prague, Czechia}
+%\acmPrice{15.00}
+\acmDOI{xx.xxxx/xxxxxxx.xxxxxxx}
+\acmISBN{xxx-x-xxxx-xxxx-x/xx/x}
+
+
+\acmSubmissionID{10}
+\setcopyright{acmlicensed}
+% Enable the auto-generated ACM Reference Format block.
+\settopmatter{printacmref=true}
+\settopmatter{authorsperrow=2}
+
+
+% CCS Concepts (replicated from the 2025 OSmosis paper)
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10010147.10010341.10010342.10010344</concept_id>
+<concept_desc>Computing methodologies~Model verification and validation</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10002944.10011123.10011675</concept_id>
+<concept_desc>General and reference~Validation</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10011007.10011074.10011099.10011692</concept_id>
+<concept_desc>Software and its engineering~Formal software verification</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{General and reference~Validation}
+\ccsdesc[500]{Computing methodologies~Model verification and validation}
+\ccsdesc[500]{Software and its engineering~Formal software verification}
+
+
+
+% Keywords
+\keywords{Hardware Model Validation, Software Verification, Complexity Reduction.}% 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The Venue this Paper will Appear in
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 
 \usepackage{cleveref}
 \usepackage{enumitem}
 \usepackage{lipsum}
 \usepackage{float}
 \usepackage{listings}
+\usepackage{soul}
 
 \newfloat{lstfloat}{htbp}{lop}
 \floatname{lstfloat}{Listing}
@@ -41,21 +87,22 @@
 %\title{The Crux about Hardware Model Validations -- Towards Efficient Model Validation on Real Hardware}
 \title{Towards Tractable Hardware Model Validation Against Real Hardware}
 
-\author{Author 1}
+\author{Rishika Varma Kalidindi}
+\orcid{0009-0009-5971-8715}
 \affiliation{%
-  \institution{Institution}
-  \city{City}
-  \country{Country}
+  \institution{University of Michigan}
+  \city{Ann Arbor}
+  \country{USA}
 }
-\email{author1@example.com}
 
-\author{Author 2}
+\author{Reto Achermann}
+\orcid{0000-0003-3263-7236}
 \affiliation{%
-  \institution{Institution}
-  \city{City}
-  \country{Country}
+\institution{Technical University of Munich}
+% \department{Department of Computer Science}
+\city{Munich}
+\country{Germany}
 }
-\email{author2@example.com}
 
 \begin{abstract}
 \input{sections/abstract}

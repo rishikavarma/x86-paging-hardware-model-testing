@@ -12,6 +12,6 @@ Unfortunately, validating the accuracy of the formalized hardware model is hard.
 
 % Approach
 We present a methodology that lets us validate an abstract formal model against real hardware by generating test cases, executing them on real hardware to capture traces of observable behavior, and finally employing a synthesis approach to identify the internal microarchitectural steps that explain the observable behavior. 
-To scale this approach to real-world examples, we employ a state-reduction method to limit the possible choices for test case generation and synthesis.
+To scale this approach to real-world examples, we .
 % Results
-We evaluate this methodology on a model of the x86 MMU, demonstrating that synthesis can recover internal microarchitectural steps that explain observed hardware behavior.
+We discuss this methodology in the context of a model of the \hl{TLB and page tables of the} x86 MMU, demonstrating that synthesis can recover internal microarchitectural steps that explain observed hardware behavior. \hl{This includes our approach to scale this process by employing a state-reduction method exploiting specific model related ideas which can also be adapted to other model contexts.} 
