@@ -47,15 +47,16 @@ This is similar to a fuzzer generating inputs to a program under test.
 
 \noindent\textbf{Test Execution Harness (\Cref{sec:harness})}
 We execute the test programs on real hardware,
-producing an execution trace that includes the instruction and the observable outcome, i.e., the value of the memory cell or that a fault occurred.
-The challenge here is how to synchronize cores and store the instruction's result without affecting the outcome of future tests.
+producing a \hl{set of execution traces from each core} that includes the instruction and the observable outcome, i.e., the value of the memory cell or that a fault occurred.
+The challenge here is how to synchronize cores and store the instruction's result without affecting the outcome of future tests.  
 The observed values should reflect hardware translation and caching effects rather than interference from the operating system. 
 
 \noindent\textbf{Trace Validation (\Cref{sec:analysis})}
-To validate the collected execution trace, we must extend it with internal microarchitectural steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded.
-We search for a sequence of model transitions that embeds the collected execution trace. 
+To validate the set of collected execution traces, we must extend it with internal microarchitectural steps so that the outcomes of the observable steps are justified, e.g., the page walk succeeded. 
+\hl{To model concurrency and asynchrony accurately, we search for a single sequence of model transitions that interleave the execution traces of each core as well as hardware triggered unobservable events as allowed by the model constraints. }
+% We search for a sequence of model transitions that embeds the collected execution traces. 
 A failed search indicates a model bug.
-We cast this as a software synthesis problem: complete a program sketch by inserting the necessary internal steps.
+We cast this as a software synthesis problem: complete a program sketch by \hl{interleaving a set of asynchronous traces and} inserting the necessary internal steps.
 
 % A successful search yields a witness execution (including hidden steps) that explains the observation and counts as a positive validation. A failed search indicates that no model-admissible execution exists for that observation, which is evidence that the model is incorrect or incomplete and can direct improvements. 
 % We chose a synthesis encoding of trace checking because the gap between observed and internal traces is exactly the kind of hidden-step reconstruction problem solvers handle well (\Cref{sec:bg:synthesis}).
