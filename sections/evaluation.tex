@@ -17,7 +17,7 @@ We evaluate whether using the reduced model to generate test cases yields useful
 
 \noindent\textbf{Methodology.}
 %
-We analyse our graph-based test case generator's reduction strategy to identify allowed test cases that are similar to existing, hand-crafted Litmus tests designed for exposing specific behavior of the memory subsystem~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding}, specifically those involving the store buffer, as our model includes this aspect as well.
+We analyze our graph-based test case generator's reduction strategy to identify allowed test cases that are similar to existing, hand-crafted Litmus tests designed for exposing specific behavior of the memory subsystem~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding}, specifically those involving the store buffer, as our model includes this aspect as well.
 The classic store-buffer test~\cite{diySBlitmus} has two threads, each writing one location and then reading the other.
 The outcome in which both reads see the initial value is allowed by x86-TSO but forbidden under sequential consistency. 
 
@@ -58,7 +58,7 @@ We then use the two observable program traces shown in \autoref{lst:eval:traces}
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[
-  basicstyle=\ttfamily\tiny,
+  basicstyle=\ttfamily\scriptsize,
   xleftmargin=1.4em,
   frame=single,
   framerule=0.2pt,
@@ -84,7 +84,7 @@ In contrast, in the second case, which reads from a non-present page, there is n
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[
-  basicstyle=\ttfamily\tiny,
+  basicstyle=\ttfamily\scriptsize,
   xleftmargin=1.4em,
   frame=single,
   framerule=0.2pt,

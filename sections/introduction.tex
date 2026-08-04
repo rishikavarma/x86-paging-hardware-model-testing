@@ -10,11 +10,11 @@
 System software is a high-value target for formal verification due to its critical role in enforcing isolation between processes, containers, or virtual machines.
 There has been a steady stream of verified kernels
 ~\cite{Klein:2009:seL4, Gu:2016:CertiKOS, Chen:2025:Atmosphere}, hypervisors~\cite{Tao:2021:seKVMArm}, or security monitors~\cite{Zhou:2024:Verismo}.
-Common to all system software is that it must directly interact with hardware to establish the desired isolation properties, e.g., set up a virtual machine or the address space of a process. 
+Common to all system software is that it must directly interact with hardware to establish the desired isolation properties, e.g., by setting up a virtual machine or a process's address space. 
 
 Verifying system software means reasoning about the effects of its interactions with hardware.
 This means that we must write an abstract specification of \emph{relevant} parts of the hardware platform and its behavioral semantics, e.g., control registers, the translation lookaside buffer (TLB), the mechanics of a page table walk, or the semantics of the virtual machine control structure fields. 
-Then use this specification to reason about the effects of a write to a register or a page table entry on the overall system, e.g., whether the process now has access to a given page of memory.
+Then use this specification to reason about the effects of a write to a register or a page table entry on the overall system, e.g., whether the process now has access to a given memory page.
 Consequently, the verification result depends directly on the accuracy of the hardware specification it is verified against.
 
 
@@ -24,15 +24,15 @@ Consequently, the verification result depends directly on the accuracy of the ha
 %  - environment can contain bugs
 %  - do not express relevant aspects
 %  - 
-Unfortunately, writing accurate hardware specifications is hard on its own, as documentation is often incomplete, imprecise, or even contradictory. 
+Unfortunately, writing accurate hardware specifications is hard in itself, as documentation is often incomplete, imprecise, or even contradictory. 
 There are three main problems: 
 First, the formal specifications of the environment contain bugs~\cite{Fonseca:2017:EnvironmentBugs} that manifest in the verified implementation~\cite{goldweber2024ironspec,reid2016trustworthy}.
-Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap,Bognar:2022:MindTheGap}, i.e., the formal model does not contain bugs, but it is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant details.
+Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap,Bognar:2022:MindTheGap}, i.e., the formal model does not contain bugs, but is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant details.
 Third, not all the steps the hardware takes are directly visible to the software. However, they influence observable outcomes. For example, a speculative TLB fill walks the page table and inserts an entry in the TLB that might be used in a future memory access. 
 
 It is paramount that we do not take hardware specification solely on faith, but 
 validate the formal specification against real hardware implementations~\cite{reid2016trustworthy,armstrong2019sail}. 
-The benefit is two-fold: a mismatch can mean a bug in the specification or the hardware itself. 
+The benefit is twofold: a mismatch can indicate a bug in the specification or in the hardware itself. 
 Existing validation approaches cover the ARMv8 architecture specification~\cite{Reid:2017:ValidationArmv8},
 TSO memory model~\cite{owens2009x86tso} or the Arm weak memory models~\cite{alglave2011litmus,alglave2014herding}.
 However, none of them explicitly include the invisible, internal microarchitectural steps of the virtual memory system.
@@ -43,20 +43,20 @@ However, none of them explicitly include the invisible, internal microarchitectu
 % - state reduction techniques
 % - 
 %
-We describe a methodology for validating hardware models against real hardware. 
+We describe a methodology for validating hardware models against real hardware.
 On a high level, this includes 
 1) test case generation based on an operational model,
 2) execute these test cases on real hardware, and
 3) validation of the model against a trace of observed hardware behavior.
-During validation, we need to identify the \emph{missing} internal microarchitectural steps that justify the observable trace. 
-\hl{To ease analysis of large number or length of traces, we propose automating it by casting this into a software synthesis problem instead of requiring manual intervention.}
+During validation, we need to identify the \emph{missing} internal microarchitectural steps that justify the observed trace. 
+\hl{To ease analysis of a large number or long traces, we propose automating validation by casting this into a software synthesis problem instead of requiring manual intervention.}
 However, instead of synthesizing instructions, we synthesize the invisible, internal microarchitectural steps and use the observable trace as the verification condition.
 
 Exhaustively exploring all possible hardware behaviors is prohibitively expensive.
 Hence, we must reduce the number of choices for test case generation and synthesis-based validation.
 To reduce the number of choices in test case generation and validation, we employ techniques that leverage symmetry and abstraction.
 Intuitively, we can replace a trace with a simpler one if it still exposes the same hardware behavior.
-For example, consider an execution trace of memory accesses in an eight-core system; we might be able to find an equivalent trace on a four-core system by combining the execution steps accordingly.
+For example, consider an execution trace of memory accesses in an eight-core system; we might be able to find an equivalent trace on a two-core system by combining the execution steps accordingly.
 % 
 % Results:
 %
@@ -68,7 +68,7 @@ Finally, we present our choice-reduction techniques that reduce the number of co
 % Contributions
 %
 The contributions of this paper are:
-\begin{itemize}
+\begin{itemize}[topsep=0pt, leftmargin=1.5em]
 \item A synthesis-based validation method that reconstructs internal microarchitectural steps (\S\ref{sec:design})
 \item A reduction strategy enabling tractable validation of MMU models (\S\ref{sec:reduction})
 \item A prototype implementation evaluated on x86 paging behavior

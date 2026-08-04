@@ -2,33 +2,42 @@
 \section{Trace Validation with Software Synthesis}\label{sec:analysis}
 %% ============================================================
 
-To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the trace's observed behavior. \hl{While for short traces, this is easily achieved by manual analysis, we expect situtions with long traces with ambiguous intermediate steps or large number of traces to be analysed. Since manually analysing would be pain staking in these cases, we propose automating it using software synthesis.}
+To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the observed behavior of the trace. 
 Recall that the model's transitions fall into observable and internal steps, where the observable steps correspond to the behavior of the execution trace. 
+\hl{While for short traces, this is easily achieved by manual analysis, we expect situations with long traces with many internal steps or a large number of traces to be analyzed.}
+
 We observe that we can treat the model's state transitions as possible steps a program takes.
-In our case, this lets us cast the problem of trace validation as finding the missing internal steps that complete the observed trace from the execution. In other words, applying software synthesis to repair the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
-or program repair~\cite{Nguyen:2013:SemFix}.
+In our case, this lets us cast the problem of trace validation into a program completion problem: we need to find the missing internal steps that complete the observed trace from the execution. In other words, the problem we are facing is similar to ``repairing'' the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
+or program repair~\cite{Nguyen:2013:SemFix} in the context of software synthesis. Thus, we cast trace validation as a software synthesis problem.
 
-
+\begin{tcolorbox}[
+%title=Meine erste bunte tcolorbox,
+title filled=false,
+boxsep=1pt, top=1pt, bottom=1pt, left=1pt, right=1pt,
+colback=black!5!white,
+colframe=black!5!white
+]
 \noindent\textbf{The Synthesis Problem.}
-\emph{Given the model and an observable trace, we ask a solver to find a sequence of internal actions that, interleaved with the observed externals, is admissible by the model.}
-A satisfying solution is a witness execution containing the internal actions that explain the observation; an unsatisfiable query indicates that no model-admissible execution explains the trace, and is evidence that the model is incorrect or incomplete. 
+\emph{Given the model and an observable trace, we ask a solver to find a sequence of internal actions that, interleaved with the observed external events, is admissible by the model.}
+\end{tcolorbox}
 
+A satisfying solution is a witness execution containing the internal actions that explain the observed outcome of the test program. An unsatisfiable query indicates that no model-admissible execution explains the trace, and is evidence that the model is incorrect or incomplete. 
 
 \noindent\textbf{Synthesis Implementation.}
 We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set of constraints over a single linear trace that interleaves the actions of all cores. 
-\autoref{lst:analysis:rosette} shows the code, which consists of the following elements:
+\autoref{lst:analysis:rosette} shows the simplified encoding, which consists of the following main elements:
 
 \begin{enumerate}[topsep=0pt, leftmargin=1.5em]
- \item \emph{System State.} One-to-one encoding of the model's state in Rosette.
- \item \emph{Grammar.} Defines a grammar with a rule for each transition in the reduced model. 
+ \item \emph{System State.} One-to-one encoding of the model's state in Rosette, i.e., memory, per-core TLBs, caches etc. 
+ \item \emph{Grammar.} Defines a grammar from which the trace is completed. It contains a rule for each transition in the reduced model. 
  \item \emph{Interpretation.} Defines the grammar semantics equivalent to the model transitions. If a step would not be permissible, the interpretation yields the non-updated state with indication of failure; otherwise, it updates the system state according to its semantics.
- \item \emph{Program Correctness.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
+ \item \emph{Program Correctness Predicate.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
 \end{enumerate}
 Rosette then uses the grammar to construct candidate programs, initializes the system state, starts interpreting the program, and uses the correctness condition to check whether the program satisfies the trace.
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[
-  basicstyle=\ttfamily\tiny,
+  basicstyle=\ttfamily\scriptsize,
   numbers=left,
   numberstyle=\tiny,
   numbersep=3pt,
@@ -43,7 +52,7 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
 ;; State: MMU components.
 (struct State (mem root pt tlb walks cache sbuf))
 
-;; Model transitions that modify and return updated state.
+;; Model transitions modifying state
 (define (step st op) ...) ; returns (state, valid?)
 
 ;; Grammar: candidate linear traces.
@@ -59,7 +68,7 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
   [pte (choose #f (cons pa valid?))]
   [w   (choose walk0 walk1 ...)])
 
-;; Interpretation: validity is the conjunction of all chosen model steps.
+;; Interpretation: Semantic definition of steps
 (define (interp tr st)
   (match tr
     [(Return) (values st #t)]
@@ -68,7 +77,7 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
      (define-values (st2 ok2) (interp rest st1))
      (values st2 (and ok1 ok2))]))
 
-;; Correctness constraint used by synthesis.
+;; Program Correctness Predicate.
 (define (check observed)
   (define tr (trace-grammar))
   (assert-required-ops tr observed)
@@ -82,28 +91,17 @@ Rosette then uses the grammar to construct candidate programs, initializes the s
 \end{lstfloat}
 
 \noindent\textbf{Challenges.}
-The synthesis problem grows exponentially in trace length and grammar size, motivating our reduction techniques.
-While our current prototype can handle small scenarios (i.e., finding a handful of missing internal actions), scaling it to larger ones requires additional work -- and this despite the reduced model.
-Currently, we do not impose structure or ordering on the internal steps; instead, we let Rosette determine them during synthesis. While this does not limit possible interleavings, it also adds complexity.
-We think that a multi-step approach offers a promising improvement. Specifically, we plan to:
+The synthesis problem grows exponentially in trace length and grammar size.
+While our current prototype can handle small scenarios (i.e., finding a handful of missing internal actions), scaling it to larger ones requires additional work. 
+Our model reduction technique has proven useful in this regard, however, there are still some opportunities to further reduce the choices.
+For example, we currently do not impose structure or ordering on the internal steps. Instead, we let Rosette determine them during synthesis. While this does include all possible interleavings, it also produces traces that would not occur in hardware, e.g., filling the TLB without corresponding page walk finished. The core challenge here is to over constrain the grammar.
+
+We think that a multi-step synthesis approach offers a promising path. Specifically, we plan to:
 
 \begin{itemize}[topsep=0pt, leftmargin=1.5em]
-  \item \emph{Abstract non-test cores.} Currently, we model all cores with the same fidelity. 
+  \item \emph{Abstract non-test cores.} Currently, we model all cores with the same fidelity, as we have not implemented the the core-fidelity reduction yet (\S\ref{sec:reduction}).
   Consequently, Rosette must implement internal steps for all cores, which increases complexity.
   We plan to treat memory write-backs as relevant events and abstract away all internal steps for the other cores. 
-  \item \emph{Big-Step Walks.} The model expresses page walks as multiple small steps; instead, we can introduce a complete walk as a grammar element, interleaved by possible page-table updates from other cores.
+  \item \emph{Big-Step Walks.} The model expresses page walks as multiple small steps. Instead, we can introduce a complete walk as a grammar element, interleaved by possible page-table updates from the local or other cores.
   \item \emph{Leveraging Domain Knowledge.} We observe that a memory access can only succeed if there is a corresponding TLB entry, which in turn can only be there if a page walk succeeded. We can leverage this dependency during synthesis. 
 \end{itemize}
-
-
-% \begin{itemize}
-%   \item \textbf{Coarser walk structure and overlap-based reasoning.}
-%   Instead of letting the solver choose each fine-grained walk micro-step, one can introduce a single \emph{walk} macro-step that stands for an entire walk history, with internal ordering resolved only where it matters.
-%   With concurrent walks, many pairs are effectively \emph{quiescent}: walks that do not overlap. A modification to the paging structures they consult can often be treated as atomic with respect to those updates, which shrinks the interleaving space.
-%   What then matters is (i) whether a walk is \emph{in flight} over a virtual-address range while paging structures for that range are being modified, and (ii) where in that window the update becomes architecturally visible relative to the walk.
-
-%   \item \textbf{Per-core abstraction and pruned action sets.}
-%   Another reduction is to ignore, where sound, non-write events from other cores when reasoning about a given core's translation story, or to separate each core's contribution and only merge at explicit synchronization points.
-%   More generally, the transition relation need not expose every action at every state: domain knowledge from the reduction argument (Section~\ref{sec:reduction}) can cut down the actions eligible from each state, rather than enumerating a full Cartesian product of interleavings.
-% \end{itemize}
-

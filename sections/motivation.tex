@@ -4,40 +4,47 @@
 
 Verifying operating systems is particularly challenging because they directly interact with hardware to configure security-relevant features, such as virtual memory.
 These interactions can change which memory regions are accessible and which are not. 
-To reason about the isolation properties and the system integrity, one must formally specify the semantics of the underlying hardware environment and reason about the operating system's interaction with it. 
+To reason about isolation properties and system integrity, one must formally specify the semantics of the underlying hardware environment and analyze the operating system's interaction with it. 
 
-\subsection{Example: Unmapping of Memory.}
+\subsection{A Simple Model, and its Problems.}
 
-To unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this alone is not sufficient, as the TLB might still cache the now-stale translation. So we model this as a TLB and a flat mathematical map that stores the virtual-to-physical address translation, with operations to update a page-table entry, and to fill and invalidate the TLB. This model has several problems.
+Recall, to unmap a memory page, the operating system must invalidate the corresponding page table entry by setting its present bit to 0. However, this alone is not sufficient, as the TLB might still cache the now-stale translation. 
+We could model this as two flat, mathematical maps: one representing the TLB and one storing a flattened representation of the page table's virtual-to-physical address translation. Then, we express operations to update a page table entry, fill and invalidate the TLB, and perform a memory access that uses the translation information in the TLB. 
+%
+Unfortunately, this model has several problems.
 
 \noindent\textbf{Problem 1: Over-Aproximation.} 
 The page table is a flat mathematical map. Updates to intermediate levels in the page table structure are abstracted away. TLB fills are atomic. 
 
 \noindent\textbf{Problem 2: Missing Memory Model.}
-Updates to the page table are memory writes that are governed by the underlying memory model.
-Store buffers and data caches are omitted, and the TLB could be filled using the old page table entry.
+Store buffers and data caches are omitted. Updates to the page table are modeled as atomic and become globally visible to all cores simultaneously.
 
-\noindent\textbf{Problem 3: Internal Microarchitectural Steps}
+% and the TLB could be filled using the old page table entry.
+% Updates to the page table are memory writes that are governed by the underlying memory model.
+
+\noindent\textbf{Problem 3: Missing Internal Microarchitectural Steps}
 The hardware may speculatively evict and/or fill the TLB, or write back an entry to the store buffer, at any time, even while updates to the page table are in progress.
 
+As a result, the MMU may map virtual addresses to the wrong physical address or apply the stale (wrong) permissions during access control, breaking isolation and violating system security.
 
 \subsection{The Core Problem: Model-Reality Mismatch}
 
 There are two kinds of mismatches:
 
 \noindent\textbf{1) Hardware steps outside of the modeled behavior.}
-The formal model abstracts away relevant underlying details (e.g., page table structure, store buffers, non-atomic updates, etc), and the hardware may exhibit behavior for which there exists no corresponding step in the specification.
-Consequently, verification against such an overapproximated specification results in an implementation that does not correctly handle behavior outside it.
+The formal model abstracts away relevant underlying details (e.g., page table structure, store buffers, non-atomic updates) or overly constrains its operations (e.g., by preventing certain memory reorderings that are possible on weak-memory hardware).
+Consequently, the hardware may exhibit behavior for which there exists no corresponding operational step in the specification, and verification against such an overapproximated specification yields an implementation that does not correctly handle behavior present on real hardware.
 
 \noindent\textbf{2) Model Specification is too Broad.}
 The formal model is more permissive than the real hardware. For example, it allows arbitrary reorderings of memory writes while the hardware enforces a total-store order. 
-While this covers all behavior of the underlying hardware, it also forces reasoning against a more permissible environment specification, which may make the proof effort bigger.
+While this covers all behavior of the underlying hardware, it also forces reasoning within a less permissive environment specification, which may make the proof effort more substantial.
 
 
-\subsection{The Environment Specification must be Tight.}
+\subsection{The Environment Specification must be Tight}
 
-The environment specification must be able to express the possible hardware behavior. Otherwise, verification results are meaningless because the verified program runs in an environment it cannot handle, and thus ~\cite{goldweber2024ironspec,reid2016trustworthy} \hl{subsequent behaviour may diverge from expected, safe patterns}. 
-At the same time, the environment specification should not be too restrictive to make the verification effort overly complicated.
+In summary, the environment specification must be able to express the hardware's possible behavior, nothing more.
+A too strict model leads to meaningless verification results because the verified program runs in an environment it cannot handle, and thus \hl{subsequent behavior may diverge from expected, safe patterns}~\cite{goldweber2024ironspec,reid2016trustworthy}. 
+While an overly permissive environment specification might lead to a more complicated verification effort or even less performant code due to unnecessary synchronization.
 
 % \noindent\textbf{Take-Away:}
 % It is paramount that we do not take hardware specifications solely on faith, but 

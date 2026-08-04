@@ -10,4 +10,4 @@ That lets us leverage Barrelfish's infrastructure for booting cores and memory m
 We integrate the test cases into the kernel. We write a small user-space driver that performs setup, coordinates among the cores, and then invokes the test case in the kernel via a system call.
 At the end, we collect the results: the observed outcome of the memory accesses (i.e., whether they caused a fault and the value read).
 
-We cannot use shared-memory barriers for synchronization among cores, as they introduce memory accesses that add undesired interference with the tests. Instead, we intend to leverage synchronized timestamp counters for synchronization. The test drivers agree on which timestamp counter value each core starts its execution.
+We cannot use shared-memory barriers for synchronization among cores, as they introduce memory accesses that add undesired interference with the tests. Instead, we intend to leverage synchronized timestamp counters for synchronization. The test drivers agree on the timestamp counter value at which each core starts its execution.

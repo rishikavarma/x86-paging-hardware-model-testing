@@ -1,7 +1,7 @@
 %%% paper.tex — PLOS 2026 submission
 %%% ACM sigplan, anonymous, 10pt (per CFP)
 %%% Max 6 pages (excl. bibliography), double-blind
-\documentclass[sigplan,10pt]{acmart}
+\documentclass[sigplan,screen,10pt]{acmart}
 
 % Disable CCS, keywords, and ACM ref format (not required for submission)
 \settopmatter{printacmref=true}
@@ -9,19 +9,19 @@
 % \pagestyle{plain}
 
 % PLOS 2026 venue info (replaces the default acmart "Conference'17" placeholder).
-\acmYear{2026}
-\copyrightyear{2026}
-\acmConference[PLOS '26]{14th Workshop on Programming Languages and Operating Systems}{September 29, 2026}{Prague, Czechia}
-\acmBooktitle{14th Workshop on Programming Languages and Operating Systems (PLOS '26), September 29, 2026, Prague, Czechia}
-%\acmPrice{15.00}
-\acmDOI{xx.xxxx/xxxxxxx.xxxxxxx}
-\acmISBN{xxx-x-xxxx-xxxx-x/xx/x}
 
+\copyrightyear{2026}
+\acmYear{2026}
+\setcopyright{cc}
+\setcctype{by}
+\acmConference[PLOS '26]{14th Workshop on Programming Languages and Operating Systems}{September 29-October 02, 2026}{Prague, Czech Republic}
+\acmBooktitle{14th Workshop on Programming Languages and Operating Systems (PLOS '26), September 29-October 02, 2026, Prague, Czech Republic}
+\acmDOI{10.1145/3831586.3838143}
+\acmISBN{979-8-4007-2877-8/2026/09}
 
 \acmSubmissionID{10}
-\setcopyright{acmlicensed}
 % Enable the auto-generated ACM Reference Format block.
-\settopmatter{printacmref=true}
+% \settopmatter{printacmref=true}
 \settopmatter{authorsperrow=2}
 
 
@@ -34,11 +34,6 @@
 <concept_significance>500</concept_significance>
 </concept>
 <concept>
-<concept_id>10002944.10011123.10011675</concept_id>
-<concept_desc>General and reference~Validation</concept_desc>
-<concept_significance>500</concept_significance>
-</concept>
-<concept>
 <concept_id>10011007.10011074.10011099.10011692</concept_id>
 <concept_desc>Software and its engineering~Formal software verification</concept_desc>
 <concept_significance>500</concept_significance>
@@ -46,7 +41,6 @@
 </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{General and reference~Validation}
 \ccsdesc[500]{Computing methodologies~Model verification and validation}
 \ccsdesc[500]{Software and its engineering~Formal software verification}
 
@@ -68,6 +62,7 @@
 \usepackage{float}
 \usepackage{listings}
 \usepackage{soul}
+\usepackage[most]{tcolorbox}
 
 \newfloat{lstfloat}{htbp}{lop}
 \floatname{lstfloat}{Listing}
@@ -89,9 +84,10 @@
 
 \author{Rishika Varma Kalidindi}
 \orcid{0009-0009-5971-8715}
+\authornote{Work done while at the University of Michigan and MPI-SWS.}
 \affiliation{%
-  \institution{University of Michigan}
-  \city{Ann Arbor}
+  \institution{University of Texas at Austin}
+  \city{Austin, TX}
   \country{USA}
 }
 

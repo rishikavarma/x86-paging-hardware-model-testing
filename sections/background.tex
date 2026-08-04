@@ -35,6 +35,6 @@ Serializing instructions (e.g., fences) force store buffer writeback.
 
 % talk about processor internal events
 \noindent\textbf{Processor Internal Events.}
-A processor effectively executes a sequence of events, which we can classify into externally observable and invisible internal microarchitectural events.
+A processor effectively executes a sequence of events that we can classify as externally observable or invisible internal microarchitectural events.
 Instruction execution is an observable event with a well-defined outcome, e.g., a memory read returns the value 42, which gets copied into a register.
 Internal events such as cache fill/eviction, store buffer writebacks, and speculative execution are not directly observable, but they might influence the outcome of an observable event. For example, the processor speculatively executes a TLB fill, resulting in a TLB hit on the next memory access. 
