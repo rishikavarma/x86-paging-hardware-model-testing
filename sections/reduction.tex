@@ -9,14 +9,14 @@ While these justifications are not rigorous proofs, they are a principled applic
 On a multi-core system, cores typically share memory and might even use the same page table for multi-threaded processes.
 However, we observe that any given core does not directly see the internal steps of the other cores in the system.
 Instead, each core only sees write-back events from other cores.
-Hence, we do not need to model all cores with full fidelity. Instead, we can pick a core as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace.
+Hence, we do not need to model all cores with full fidelity \hl{at the same time}. Instead, we can pick \hl{each core separately} as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace. \hl{This breakdown preserves the overall fidelity of all cores while simplifying analysis.}
 
 
 \noindent\textbf{Two cores.}
 By reducing the core fidelity, we can make a second observation: 
 From the "core-under-test's" point of view, it does not matter which other core executed the memory writeback. What matters is the order in which the core observes them.
 This enables us to merge writebacks from other cores into a single writeback sequence, where the non-deterministic ordering results in a permutation of the order. 
-Assuming a multicopy atomic update architecture~\cite{Coughlin:2023:NonMultiCopyUpdates} such as x86, we can reduce the total core count to two: the core under test and a single "remote" core that executes all writebacks of the other cores in the system.
+Assuming a multicopy atomic update architecture~\cite{Coughlin:2023:NonMultiCopyUpdates} such as x86, we can reduce the \hl{total arbitrary core count to two representative cores}: the core under test and a single "remote" core that executes all writebacks of the other cores in the system.
 
 
 \noindent\textbf{Two Levels of Paging.}
