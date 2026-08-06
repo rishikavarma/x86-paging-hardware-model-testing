@@ -13,7 +13,8 @@ or program repair~\cite{Nguyen:2013:SemFix} in the context of software synthesis
 \begin{tcolorbox}[
 %title=Meine erste bunte tcolorbox,
 title filled=false,
-boxsep=1pt, top=1pt, bottom=1pt, left=1pt, right=1pt,
+boxsep=1pt, top=0pt, bottom=0pt, left=1pt, right=1pt,
+before skip=3pt, after skip=3pt,
 colback=black!5!white,
 colframe=black!5!white
 ]
@@ -24,12 +25,12 @@ colframe=black!5!white
 A satisfying solution is a witness execution containing the internal actions that explain the observed outcome of the test program. An unsatisfiable query indicates that no model-admissible execution explains the trace, and is evidence that the model is incorrect or incomplete. 
 
 \noindent\textbf{Synthesis Implementation.}
-We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set of constraints over a single linear trace that interleaves the actions of all cores. 
-\autoref{lst:analysis:rosette} shows the simplified encoding, which consists of the following main elements:
+We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set of constraints over a single linear trace that interleaves the core's actions. 
+\autoref{lst:analysis:rosette} shows the simplified encoding consistsing of the following elements:
 
 \begin{enumerate}[topsep=0pt, leftmargin=1.5em]
  \item \emph{System State.} One-to-one encoding of the model's state in Rosette, i.e., memory, per-core TLBs, caches etc. 
- \item \emph{Grammar.} Defines a grammar from which the trace is completed. It contains a rule for each transition in the reduced model. 
+ \item \emph{Grammar.} Defines a grammar from which the trace is completed. It contains a rule for each model transition. 
  \item \emph{Interpretation.} Defines the grammar semantics equivalent to the model transitions. If a step would not be permissible, the interpretation yields the non-updated state with indication of failure; otherwise, it updates the system state according to its semantics.
  \item \emph{Program Correctness Predicate.} A candidate program is correct if it contains the observed external actions in the same order and with the same outcomes as in the execution trace.
 \end{enumerate}
@@ -100,8 +101,8 @@ We think that a multi-step synthesis approach offers a promising path. Specifica
 
 \begin{itemize}[topsep=0pt, leftmargin=1.5em]
   \item \emph{Abstract non-test cores.} Currently, we model all cores with the same fidelity, as we have not implemented the the core-fidelity reduction yet (\S\ref{sec:reduction}).
-  Consequently, Rosette must implement internal steps for all cores, which increases complexity.
-  We plan to treat memory write-backs as relevant events and abstract away all internal steps for the other cores. 
+  Consequently, Rosette must handle internal steps for all cores, which increases complexity.
+  We plan to abstract away all internal steps for the other cores. 
   \item \emph{Big-Step Walks.} The model expresses page walks as multiple small steps. Instead, we can introduce a complete walk as a grammar element, interleaved by possible page-table updates from the local or other cores.
-  \item \emph{Leveraging Domain Knowledge.} We observe that a memory access can only succeed if there is a corresponding TLB entry, which in turn can only be there if a page walk succeeded. We can leverage this dependency during synthesis. 
+  \item \emph{Leveraging Domain Knowledge.} We observe that a memory access can only succeed if there is a corresponding TLB entry, which in turn can only exist if a page walk succeeded -- a dependency we can leverage. 
 \end{itemize}
