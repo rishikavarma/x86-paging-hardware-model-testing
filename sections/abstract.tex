@@ -11,7 +11,7 @@ However, the validity of the verification result depends on the accuracy of the 
 Unfortunately, validating the accuracy of the formalized hardware model is hard. It not only requires relating the model's specification to the observable behavior of real hardware, but also involves many invisible internal microarchitectural steps that influence the observable execution of a modern processor. 
 
 % Approach
-We present a methodology that lets us validate an abstract formal model against real hardware by generating test cases, executing them on real hardware to capture traces of observable behavior, and finally employing a synthesis approach to identify the internal microarchitectural steps that explain the observable behavior. 
+We present a methodology that lets us validate an abstract formal model against real hardware by generating test cases, executing them on real hardware to capture traces of observable behavior, and finally employing a synthesis approach to identify the internal microarchitectural steps that explain the observable behavior.
 % To scale this approach to real-world examples, we employ a state-reduction method to limit the possible choices for test case generation and synthesis. 
 % Results
-We discuss this methodology in the context of a model of the TLB and page tables of the x86 MMU, demonstrating that synthesis can recover internal microarchitectural steps that explain observed hardware behavior. This includes scaling this process by employing a state-reduction method exploiting model-specific opportunities, which can be adapted to other model contexts. 
+We discuss this methodology for an x86 MMU model of TLB and page-table behavior, using model-specific state reductions to keep test generation and synthesis tractable and to illustrate how similar reduction arguments can apply in other hardware-model contexts. 
