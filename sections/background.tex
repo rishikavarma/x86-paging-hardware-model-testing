@@ -14,7 +14,7 @@ The page table, a memory-resident, multi-level radix tree, stores this address m
 
 % translations can be cached
 \noindent\textbf{Translation Caching.}
-The x86 MMU has two kinds of caches that speed up address translation: 
+The x86 MMU has two kinds of per-core caches that speed up address translation: 
 1) the translation lookaside buffer (TLB) stores the result of successful page table walks, and 
 2) page-walk cache (PWC) stores partial page table walks. 
 TLB hits bypass the page walk entirely, while a hit in the PWC skips some levels of the page table.

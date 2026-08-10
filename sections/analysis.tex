@@ -2,12 +2,12 @@
 \section{Trace Validation with Software Synthesis}\label{sec:analysis}
 %% ============================================================
 
-To validate whether the execution trace matches the model, we need to find a sequence of model transitions that explains the trace's observed behavior. 
-Recall that the model's transitions fall into observable and internal steps, where the observable steps correspond to the behavior of the execution trace. 
+To validate whether the execution traces match the model, we need to find a sequence of model transitions that explain the traces' behavior. 
+Recall that the model's transitions fall into observable and internal steps, where the observable steps correspond to the behavior of the execution traces. 
 While for short traces, this is easily achieved by manual analysis, we expect situations with long traces with many internal steps or a large number of traces to be analyzed.
 
 We observe that we can treat the model's state transitions as the possible steps a program can take.
-In our case, this lets us cast the problem of trace validation into a program completion problem: we need to find the missing internal steps that complete the observed trace from the execution. In other words, the problem we are facing is similar to ``repairing'' the trace by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
+In our case, this lets us cast the problem of trace validation into a program completion problem: we need to find the missing internal steps and combine the observed traces from the execution into a single sequence. In other words, the problem we are facing is similar to ``repairing'' the traces by patching missing steps and combining, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
 or program repair~\cite{Nguyen:2013:SemFix} in the context of software synthesis. Thus, we cast trace validation as a software synthesis problem.
 
 \begin{tcolorbox}[
@@ -18,10 +18,10 @@ colback=black!5!white,
 colframe=black!5!white
 ]
 \noindent\textbf{The Synthesis Problem.}
-\emph{Given the model and an observable trace, we ask a solver to find a sequence of internal actions that, interleaved with the observed external events, is admissible by the model.}
+\emph{Given the model and an observable trace set, we ask a solver to find a combined sequence of internal actions interleaved with the observed external events, that is admissible by the model.}
 \end{tcolorbox}
 
-A satisfying solution is a witness execution containing the internal actions that explain the observed outcome of the test program. An unsatisfiable query indicates that no model-admissible execution can explain the trace and is evidence that the model is incorrect or incomplete. 
+A satisfying solution is a witness execution containing the internal actions that explain the observed outcomes of the test program. An unsatisfiable query indicates that no model-admissible execution can explain the traces and is evidence that the model is incorrect or incomplete. 
 
 \noindent\textbf{Synthesis Implementation.}
 We encode the synthesis problem in Rosette~\cite{Torlak:2013:Rosette} as a set of constraints over a single linear trace that interleaves the core's actions. 

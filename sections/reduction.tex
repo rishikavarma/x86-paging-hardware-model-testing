@@ -9,7 +9,7 @@ These justifications are not rigorous proofs, but rather a principled applicatio
 % On a multi-core system, cores typically share memory and use the same page table for multi-threaded processes.
 In a multi-core system, any given core does not directly observe the internal steps of the other cores.
 Instead, each core only sees memory writebacks from other cores through cache-coherency protocol events.
-Hence, we do not need to model all cores with their full fidelity. Instead, we can pick each core separately as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace. This breakdown preserves the overall fidelity of all cores while simplifying analysis.
+Hence, we do not need to model all cores together with their full fidelity. Instead, we can pick each core separately as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace. This breakdown preserves the overall fidelity of all cores while simplifying analysis.
 
 
 \noindent\textbf{Two cores.}
