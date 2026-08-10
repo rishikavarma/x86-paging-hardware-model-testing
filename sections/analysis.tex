@@ -7,7 +7,7 @@ Recall that the model's transitions fall into observable and internal steps, whe
 While for short traces, this is easily achieved by manual analysis, we expect situations with long traces with many internal steps or a large number of traces to be analyzed.
 
 We observe that we can treat the model's state transitions as the possible steps a program can take.
-In our case, this lets us cast the problem of trace validation into a program completion problem: we need to find the missing internal steps and combine the observed traces from the execution into a single sequence. In other words, the problem we are facing is similar to ``repairing'' the traces by patching missing steps and combining, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
+In our case, this lets us cast the problem of trace validation into a program completion problem: we need to find the missing internal steps and combine the observed traces from the execution into a single sequence. In other words, the problem we are facing is similar to ``repairing'' the traces by patching missing steps, a process similar to sketching~\cite{Solar-Lezama:2006:Sketching} 
 or program repair~\cite{Nguyen:2013:SemFix} in the context of software synthesis. Thus, we cast trace validation as a software synthesis problem.
 
 \begin{tcolorbox}[
