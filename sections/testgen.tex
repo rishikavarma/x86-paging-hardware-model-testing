@@ -6,21 +6,22 @@ A test case is a program, i.e., a set of per-core instruction sequences, that in
 The program includes writing a page table entry, reading or writing a memory address, invalidating a TLB entry, and emitting a barrier.
 %
 The instructions are parameterized. For example, a memory store takes an address and a value. 
-We use the constraints from the model reduction to select arguments for reading and writing memory addresses and page table entries. \hl{For example, we select one of the four virtual memory addresses for a memory read. We also ensure that we pick values so that there is no repetition of the same test pattern type, but with different addresses that don't introduce new scenarios.}
+We use the constraints from the model reduction to select arguments for reading and writing memory addresses and page table entries. For example, we select one of the four virtual memory addresses for a memory read. We also ensure that we pick values so that no test pattern type is repeated, using different addresses that don't introduce new scenarios.
 
-% graph based generation
+% graph-based generation
 \noindent\textbf{Graph-based Generation.}
 Instead of randomly generating programs, we leverage a graph representation of the system. Specifically, we express nodes as instances of the page table allowed by the constrained model. Edges represent writes to page table entries that update the page table. 
-Given the model constraints, we can enumerate this graph. 
+% Given the model constraints, we can enumerate this graph. 
 
 When generating a test case, we pick a node in the graph as the starting point. Then we start picking instructions for the test program. 
 We use the model to check the outcome of a memory access (i.e., whether it causes a page fault) and ensure that both cases are covered in the test case.
-Finally, we split each test case into its core parts and save them as an assembly file, which is linked into the test harness.
+Finally, we split each test case into a per-core sequence of instructions and link them into the test harness.
 
 % trace length
 \noindent\textbf{Limiting Test Case Lengths.}
-Test case length can be limited by tracking which nodes in the graph each test case visits and ensuring each node is visited at most once. We propose generating test cases with fewer page table modifications first, then increasing the number of modifications until no reachable nodes remain.
+Test case length can be limited by tracking which graph nodes each test case visits and ensuring each node is visited at most once. 
+We prioritize test cases with fewer page table modifications first, then increase the number of modifications until no reachable nodes remain.
 This strategy can be applied to the other instructions, i.e., normal memory accesses, barriers, and TLB invalidations. This avoids repeated memory accesses to the same page without requiring page table modifications, thereby bounding the length of our test programs.
 
 \noindent\textbf{Generator Implementation.}
-We implemented the test generator with Rust in 772 LoC, using an executable model of the x86 MMU. This includes graph-based test case generation, insertion of appropriate memory operations, page invalidations, barriers, and per-core test sequence output. Limiting test case length is a work in progress.
+We implemented the test generator in Rust, totaling 772 LoC, using an executable model of the x86 MMU. This includes graph-based test case generation, insertion of appropriate memory operations, page invalidations, barriers, and per-core test sequence output. Limiting test case length is a work in progress.

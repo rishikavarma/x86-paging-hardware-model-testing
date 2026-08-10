@@ -36,9 +36,10 @@ Refine the model if there is a mismatch; repeat.
 
 \noindent\textbf{Hardware Model.} 
 %
-The hardware model is the part of the system we want to validate. \hl{While our high-level methodology extends to other hardware models, for our discussion we specifically consider} an x86 multi-core processor with its MMU modeled as a TLA+-style state machine~\cite{Lamport:2002:TLA} with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
-Each transition affects the state (e.g., a memory access reads or updates the value in a memory cell) and an enabling condition is required (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
-\hl{Our initial model was based on documentation and assumptions made by existing operating systems. This model is then iteratively tested and improved if necessary.}
+The hardware model is the part of the system we want to validate. 
+While our high-level methodology extends to other hardware models, for our discussion we specifically consider an x86 multi-core processor with its MMU modeled as a TLA+-style state machine~\cite{Lamport:2002:TLA} with transitions for \emph{observable} program steps (e.g., memory accesses, barriers, TLB invalidations) and for \emph{internal} hardware events (e.g., a TLB eviction, a page table walk step, a store buffer writeback).
+Each transition may affect the state (e.g., a memory access reads or updates the value in a memory cell) and may have enabling conditions (e.g., for a memory access to be permitted, there must be a corresponding entry in the TLB).
+We base our initial model on documentation and existing OS code. 
 
 \noindent\textbf{Model Reduction (\Cref{sec:reduction})}
 The hardware model must accurately represent the underlying hardware platform. 
@@ -47,8 +48,8 @@ The resulting state space is enormous.
 Fortunately, there are many symmetries we can exploit to reduce the state space. 
 For example, while multi-core machines can have several hundred cores, we might need only a handful to observe unique hardware behavior.
 
-We reduce our model using the small-scope hypotheses~\cite{Jackson:2002:Alloy}. The small scope hypothesis anticipates that most behaviors observable in a given system are likely to be observed at a smaller scope as well. \hl{In our context, we make the reasonable assumption that a bounded testing environment, e.g., with a small number of cores or pages, would suffice to expose most relevant behaviors.} 
-While not formally proven, this assumption is standard in testing and bounded model checking \hl{and can guide induction-based proofs. While many of the simplifications we make are closely tied to the x86 hardware, similar reduction arguments could be adapted appropriately to other hardware models.}
+We reduce our model using the small-scope hypotheses~\cite{Jackson:2002:Alloy}. The small scope hypothesis anticipates that most behaviors observable in a given system are likely to be observed at a smaller scope as well. In our context, we make the reasonable assumption that a bounded testing environment, e.g., with a small number of cores or pages, would suffice to expose the relevant behaviors. 
+While not formally proven, this assumption is standard in testing and bounded model checking and can guide induction-based proofs. While many of the simplifications we make are closely tied to the x86 hardware, similar reduction arguments could be adapted appropriately to other hardware models.
 
 \noindent\textbf{Test Case Generation (\Cref{sec:testgen})}
 Based on the reduced hardware model, we generate diverse test programs, i.e., per-core sequences of instructions that define the trace of externally visible program steps, intended to expose interesting hardware behavior.
@@ -56,16 +57,16 @@ This is similar to a fuzzer generating inputs to a program under test.
 
 \noindent\textbf{Test Execution Harness (\Cref{sec:harness})}
 We execute the test programs on real hardware.
-This produces a \hl{set of per-core execution traces}. Each trace is a sequence of instructions and their observable outcome, i.e., the value of the memory cell or the occurrence of a fault.
+This produces a set of per-core execution traces. Each trace is a sequence of instructions and their observable outcome, i.e., the value of the memory cell or the occurrence of a fault.
 The challenge here is how to synchronize cores and store the instruction's result without inadvertently constraining the test's outcome.  
-Ultimately, the observed values should reflect hardware translation and caching effects rather than interference from the operating system. 
+Ultimately, the observed values should reflect hardware translation and caching effects rather than interference from the OS kernel. 
 
 \noindent\textbf{Trace Validation (\Cref{sec:analysis})}
-To validate the set of collected execution traces, we must extend it to include internal microarchitectural steps so that the outcomes of the observable steps are justified, e.g., for a memory access to complete, there must be a corresponding TLB entry and a succeeded page walk.
-\hl{To model concurrency and asynchrony accurately, we search for a single sequence of model transitions that interleave the execution traces of each core, as well as hardware-triggered unobservable events, as allowed by the model constraints. }
-% We search for a sequence of model transitions that embeds the collected execution traces. 
+To validate the set of collected execution traces, we must extend it to include the internal microarchitectural steps that justify the outcomes of the observable steps. 
+For example, for a memory access to complete, there must be a corresponding TLB entry and a successful page walk.
+To model concurrency and asynchrony accurately, we search for a single sequence of model transitions that interleave the execution traces of each core, as well as hardware-triggered unobservable events, as allowed by the model constraints.
 A failed search indicates a model bug.
-We cast this as a software synthesis problem: complete a program sketch by \hl{interleaving a set of execution traces and} inserting the necessary internal steps.
+We cast this as a software synthesis problem: complete a program sketch by interleaving a set of execution traces and inserting the necessary internal steps.
 
 % A successful search yields a witness execution (including hidden steps) that explains the observation and counts as a positive validation. A failed search indicates that no model-admissible execution exists for that observation, which is evidence that the model is incorrect or incomplete and can direct improvements. 
 % We chose a synthesis encoding of trace checking because the gap between observed and internal traces is exactly the kind of hidden-step reconstruction problem solvers handle well (\Cref{sec:bg:synthesis}).

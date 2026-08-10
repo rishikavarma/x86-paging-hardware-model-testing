@@ -10,12 +10,12 @@
 System software is a high-value target for formal verification due to its critical role in enforcing isolation between processes, containers, or virtual machines.
 There has been a steady stream of verified kernels
 ~\cite{Klein:2009:seL4, Gu:2016:CertiKOS, Chen:2025:Atmosphere}, hypervisors~\cite{Tao:2021:seKVMArm}, or security monitors~\cite{Zhou:2024:Verismo}.
-Common to all system software is that it must directly interact with hardware to establish the desired isolation properties, e.g., by setting up a virtual machine or a process's address space. 
+All system software must directly interact with hardware to establish the desired isolation properties, e.g., by setting up a virtual machine or a process's address space. 
 
 Verifying system software means reasoning about the effects of its interactions with hardware.
 This means that we must write an abstract specification of \emph{relevant} parts of the hardware platform and its behavioral semantics, e.g., control registers, the translation lookaside buffer (TLB), the mechanics of a page table walk, or the semantics of the virtual machine control structure fields. 
 Then use this specification to reason about the effects of a write to a register or a page table entry on the overall system, e.g., whether the process now has access to a given memory page.
-Consequently, the verification result depends directly on the accuracy of the hardware specification it is verified against.
+Consequently, the verification result depends directly on the accuracy of the hardware specification against which it is verified.
 
 
 %
@@ -27,7 +27,7 @@ Consequently, the verification result depends directly on the accuracy of the ha
 Unfortunately, writing accurate hardware specifications is hard in itself, as documentation is often incomplete, imprecise, or even contradictory. 
 There are three main problems: 
 First, the formal specifications of the environment contain bugs~\cite{Fonseca:2017:EnvironmentBugs} that manifest in the verified implementation~\cite{goldweber2024ironspec,reid2016trustworthy}.
-Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap,Bognar:2022:MindTheGap}, i.e., the formal model does not contain bugs, but is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant details.
+Second, there is a reality gap between the formal model and the actual hardware~\cite{Gleirscher:2019:RealityGap, Bognar:2022:MindTheGap}, i.e., the formal model does not contain bugs, but is either too permissive or too restrictive. The verification effort becomes much harder than necessary, or overapproximates relevant low-level hardware behavior.
 Third, not all the steps the hardware takes are directly visible to the software. However, they influence observable outcomes. For example, a speculative TLB fill walks the page table and inserts an entry in the TLB that might be used in a future memory access. 
 
 It is paramount that we do not take hardware specification solely on faith, but 
@@ -49,20 +49,21 @@ On a high level, this includes
 2) execute these test cases on real hardware, and
 3) validation of the model against a trace of observed hardware behavior.
 During validation, we need to identify the \emph{missing} internal microarchitectural steps that justify the observed trace. 
-\hl{To ease analysis of a large number or long traces, we propose automating validation by casting this into a software synthesis problem instead of requiring manual intervention.}
-However, instead of synthesizing instructions, we synthesize the invisible, internal microarchitectural steps and use the observable trace as the verification condition.
+To ease the analysis of a large number of long, complex traces, we propose automating validation by framing it as a software synthesis problem, thereby preventing manual intervention.
+For this, instead of synthesizing instructions, we synthesize the invisible, internal microarchitectural steps and use the observable trace as the verification condition.
 
 Exhaustively exploring all possible hardware behaviors is prohibitively expensive.
 Hence, we must reduce the number of choices for test case generation and synthesis-based validation.
-To reduce the number of choices in test case generation and validation, we employ techniques that leverage symmetry and abstraction.
+To reduce the number of choices in test case generation and validation, we employ techniques that leverage symmetry and abstraction exploitable in the hardware model.
 Intuitively, we can replace a trace with a simpler one if it still exposes the same hardware behavior.
-For example, consider an execution trace of memory accesses in an eight-core system; we might be able to find an equivalent trace on a two-core system by combining the execution steps accordingly.
+For example, consider an execution trace of memory accesses in an eight-core system; we might be able to find an equivalent trace on a two-core system by combining execution steps or breaking the trace into smaller test traces.
+
 % 
 % Results:
 %
 We validate our approach using a model of the x86 memory management unit that models the translation lookaside buffer, page walk caches, page-table walks, speculative TLB fills, and TSO-memory semantics. 
 We cover test-case generation, trace collection, and trace validation against this model. 
-Finally, we present our choice-reduction techniques that reduce the number of cores, virtual pages, physical pages, and page-table entries. 
+Finally, we present our choice-reduction techniques applicable to our model, which reduce the number of cores, virtual pages, physical pages, and page-table entries. 
 
 % 
 % Contributions
@@ -70,9 +71,8 @@ Finally, we present our choice-reduction techniques that reduce the number of co
 The contributions of this paper are:
 \begin{itemize}[topsep=0pt, leftmargin=1.5em]
 \item A synthesis-based validation method that reconstructs internal microarchitectural steps (\S\ref{sec:design})
-\item A reduction strategy enabling tractable validation of MMU models (\S\ref{sec:reduction})
-\item A prototype implementation evaluated on x86 paging behavior
-(\S\ref{sec:eval})
+\item A reduction strategy enabling tractable validation of the x86 MMU model adaptable to other models (\S\ref{sec:reduction})
+\item A prototype implementation evaluated on x86 paging behavior (\S\ref{sec:eval})
 \end{itemize}
 
  

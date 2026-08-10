@@ -9,7 +9,7 @@
 % - Scalability of the synthesis step
 
 We evaluate our approach using a qualitative evaluation showing that  1) we are capable of generating useful test cases for validation, and 2) the synthesis approach successfully finds the missing internal steps.
-While a complete validation pipeline performs all the steps outlined in \Cref{fig:validation-pipeline} automatically, our current prototype requires manual intervention.
+While a complete validation pipeline automatically performs all the steps outlined in \Cref{fig:validation-pipeline}, our current prototype requires manual intervention.
 
 \subsection{Test Case Generation}
 
@@ -17,7 +17,7 @@ We evaluate whether using the reduced model to generate test cases yields useful
 
 \noindent\textbf{Methodology.}
 %
-We analyze our graph-based test case generator's reduction strategy to identify allowed test cases that are similar to existing, hand-crafted Litmus tests designed for exposing specific behavior of the memory subsystem~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding}, specifically those involving the store buffer, as our model includes this aspect as well.
+We analyze our graph-based test case generator's reduction strategy to identify allowed test cases similar to existing hand-crafted Litmus tests designed to expose specific behavior of the memory subsystem~\cite{owens2009x86tso, sewell2010x86tso,alglave2011litmus,alglave2014herding}, particularly those involving the store buffer, since our model also includes it.
 The classic store-buffer test~\cite{diySBlitmus} has two threads, each writing one location and then reading the other.
 The outcome in which both reads see the initial value is allowed by x86-TSO but forbidden under sequential consistency. 
 
@@ -79,8 +79,8 @@ memop_read core=0, vaddr=0x00008000, observed=42
 
 \noindent\textbf{Results.}
 %
-For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. The memory access can now read the memory cell and obtain the value 42, which matches the observed value from the trace.
-In contrast, in the second case, which reads from a non-present page, there is no corresponding page walk that can be completed. Synthesis reports \emph{no solution}. As the internal steps cannot update the page table, this could never have led to a successful memory access. 
+For the first case, the synthesizer successfully finds the missing internal step: filling the TLB with the value from the page walk (\texttt{tlb\_fill} in \autoref{lst:eval:completedtrace}). This step inserts the required entry into the TLB. Recall, a memory access is only possible if there is an entry in the TLB for the corresponding virtual page. The memory access can now read the memory cell and obtain the value 42, which matches the value observed in the trace.
+In contrast, in the second case, which reads from a non-present page, there is no corresponding page walk to complete. Synthesis reports \emph{no solution}. Since the internal steps cannot update the page table, this could never have resulted in a successful memory access. 
 
 \begin{lstfloat}[t]
 \begin{lstlisting}[

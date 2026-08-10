@@ -1,22 +1,23 @@
 
 \section{State Reduction}\label{sec:reduction} %%
 
-To make test generation and validation tractable, we reduce the hardware model by limiting the range of values for various aspects of the model. 
-Next, we present several model state reductions we applied, along with informal arguments \hl{justifying each reduction. While all aspects are specific to the x86 multi-core model, we expect similar arguments to be applicable to other hardware models.}
-While these justifications are not rigorous proofs, they are a principled application of a small-scope hypothesis~\cite{Jackson:2002:Alloy} that states that most behaviors observable in a given system are likely to be observed at a smaller scope as well. Specifically, by constraining the domain of values in a principled way, we can still observe the relevant hardware behavior.
+To make test generation and validation tractable, we reduce the hardware model by constraining the ranges of values for various aspects of it. 
+We present several model state reductions that we applied, along with informal arguments justifying each. While all aspects are specific to the x86 multi-core model, we expect similar arguments to apply to other hardware models.
+These justifications are not rigorous proofs, but rather a principled application of a small-scope hypothesis~\cite{Jackson:2002:Alloy} that states that most behaviors observable in a given system are likely to be observed at a smaller scope as well. Specifically, by constraining the domain of values in a principled way, we can still observe the relevant hardware behavior.
 
 \noindent\textbf{Core Fidelity.} 
-On a multi-core system, cores typically share memory and might even use the same page table for multi-threaded processes.
-However, we observe that any given core does not directly see the internal steps of the other cores in the system.
-Instead, each core only sees write-back events from other cores.
-Hence, we do not need to model all cores with full fidelity \hl{at the same time}. Instead, we can pick \hl{each core separately} as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace. \hl{This breakdown preserves the overall fidelity of all cores while simplifying analysis.}
+% On a multi-core system, cores typically share memory and use the same page table for multi-threaded processes.
+In a multi-core system, any given core does not directly observe the internal steps of the other cores.
+Instead, each core only sees memory writebacks from other cores through cache-coherency protocol events.
+Hence, we do not need to model all cores with their full fidelity. Instead, we can pick each core separately as the ``core under test'' and reduce the other cores to execute a sequence of memory writebacks that can happen at any time in the trace. This breakdown preserves the overall fidelity of all cores while simplifying analysis.
 
 
 \noindent\textbf{Two cores.}
 By reducing the core fidelity, we can make a second observation: 
-From the "core-under-test's" point of view, it does not matter which other core executed the memory writeback. What matters is the order in which the core observes them.
+From the "core-under-test's" point of view, it does not matter which other core executed the memory writeback. 
+What matters is the order in which the core observes them.
 This enables us to merge writebacks from other cores into a single writeback sequence, where the non-deterministic ordering results in a permutation of the order. 
-Assuming a multicopy atomic update architecture~\cite{Coughlin:2023:NonMultiCopyUpdates} such as x86, we can reduce the \hl{total arbitrary core count to two representative cores}: the core under test and a single "remote" core that executes all writebacks of the other cores in the system.
+Assuming a multicopy atomic update architecture~\cite{Coughlin:2023:NonMultiCopyUpdates} such as x86, we can reduce the total arbitrary core count to two: the core under test and a single "remote" core that executes all writebacks of the other cores in the system.
 
 
 \noindent\textbf{Two Levels of Paging.}
@@ -25,7 +26,7 @@ We note that for a page walk to resolve to the wrong address, any wrong step whi
 The critical aspect here is that we need to model the non-atomicity of a page table walk. Specifically,  we must 1) capture the effect of the page walk caches that skip the upper levels of the page table on the page walk, 2) include potential behaviors resulting from interleavings between page table writes and page walks, and 3) expose the effect of super pages in the mapping. 
 
 Selecting only the lowest two levels (PMD and PT in Linux terms) for modification, and keeping the remaining levels fixed, lets us expose the necessary behavior: the page walk is non-atomic because it reads the PMD and PT entries in two steps. 
-Further, a page table walk may directly or indirectly use the old value of the PMD entry by skipping it entirely via the page walk cache, or by reading the PMD entry before it was updated (cases 1 and 2). Similarly, on x86, super pages are established at the PMD level, and thus the two levels are sufficient to expose changing of page sizes (case 3). Other behaviors at upper-level page table nodes or other superpage sizes can be mapped to a similar sequence of steps on the two-level setup.
+Further, a page table walk may use the old value of the PMD entry directly or indirectly: either by skipping it entirely via the page walk cache, or by reading the PMD entry before it was updated (cases 1 and 2). Similarly, on x86, super pages are established at the PMD level, and thus the two levels are sufficient to expose changing of page sizes (case 3). Other behaviors at upper-level page table nodes or other superpage sizes can be mapped to a similar sequence of steps on the two-level setup.
 
 
 \noindent\textbf{Three Virtual Pages (or PTEs).}
